@@ -1,0 +1,72 @@
+{
+  "name": "mobx-web-api",
+  "version": "0.0.0",
+  "scripts": {
+    "prepare": "pnpm dev:install-hooks",
+    "clean": "rimraf dist",
+    "lint:check": "pnpm exec biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
+    "ts:check": "tsc --noEmit",
+    "check": "npm run lint:check && npm run ts:check",
+    "prebuild": "npm run clean && npm run check",
+    "build:watch": "pnpm build && nodemon --delay 0.5 --watch src --ext ts,tsx --exec \"pnpm build\"",
+    "build": "tsc && node ./post-build.mjs",
+    "pub": "PUBLISH=true pnpm run build",
+    "pub:patch": "PUBLISH=true PUBLISH_VERSION=patch pnpm run build",
+    "pub:minor": "PUBLISH=true PUBLISH_VERSION=minor pnpm run build",
+    "pub:major": "PUBLISH=true PUBLISH_VERSION=major pnpm run build",
+    "test": "vitest run --config vitest.config.ts",
+    "test:watch": "vitest watch --config vitest.config.ts",
+    "test:coverage": "vitest run --config vitest.config.ts --coverage",
+    "docs": "pnpm build && cd docs && pnpm dev",
+    "docs:install": "cd docs && pnpm i",
+    "docs:build": "cd docs && pnpm build",
+    "docs:serve": "cd docs && pnpm preview",
+    "dev": "pnpm build && nodemon --delay 0.5 --watch src --ext ts,tsx --exec \"pnpm build && pnpm playground\"",
+    "playground": "node ./playground/index.mjs",
+    "dev:install-hooks": "if [ -z \"$CI\" ]; then lefthook install; fi"
+  },
+  "keywords": [
+    "mobx",
+    "web",
+    "web-api"
+  ],
+  "author": "js2me",
+  "license": "MIT",
+  "description": "Web API MobX bindings",
+  "type": "module",
+  "bin": "cli/bin.js",
+  "bugs": {
+    "url": "https://github.com/js2me/mobx-web-api/issues"
+  },
+  "homepage": "https://github.com/js2me/mobx-web-api",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/js2me/mobx-web-api"
+  },
+  "peerDependencies": {
+    "mobx": "^6.13.6"
+  },
+  "dependencies": {
+    "yummies": "^5.3.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.4",
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.5",
+    "@testing-library/react": "^16.0.1",
+    "@types/node": "^20.17.11",
+    "@vitejs/plugin-react-swc": "^3.7.2",
+    "@vitest/coverage-istanbul": "^3.2.4",
+    "commitfmt": "^1.0.0",
+    "js2me-biome-config": "^1.0.5",
+    "js2me-exports-post-build-script": "^5.0.1",
+    "jsdom": "^26.0.0",
+    "lefthook": "^1.11.13",
+    "nodemon": "^3.1.9",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3",
+    "unplugin-swc": "^1.5.1",
+    "vitest": "^3.2.4"
+  },
+  "packageManager": "pnpm@9.5.0+sha512.140036830124618d624a2187b50d04289d5a087f326c9edfc0ccd733d76c4f52c3a313d4fc148794a2a9d81553016004e6742e8cf850670268a7387fc220c903"
+}

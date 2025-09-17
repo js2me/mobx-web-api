@@ -1,0 +1,6 @@
+node_modules
+dist
+coverage
+playground
+unit-tests-coverage
+docs/.vitepress/cache
