@@ -43,8 +43,8 @@ importers:
         specifier: ^1.0.5
         version: 1.0.5
       js2me-exports-post-build-script:
-        specifier: ^5.0.1
-        version: 5.0.1(@types/node@20.17.32)
+        specifier: ^5.0.2
+        version: 5.0.2(@types/node@20.17.32)
       jsdom:
         specifier: ^26.0.0
         version: 26.1.0
@@ -1620,8 +1620,8 @@ packages:
   js2me-biome-config@1.0.5:
     resolution: {integrity: sha512-d4tI1TbvvUqnSwluUgKnkThjNnjs582BUOw77kj56+aDMIjXqyn+7DupYsrl08kPaqJpZhz1CTiRvUHac/Evlw==}
 
-  js2me-exports-post-build-script@5.0.1:
-    resolution: {integrity: sha512-rMsfnLkhlbtdwHLycWqVtwy7bCPIrqTQMrKFtwDKf/ZwI2660catZdlVJepBW5+HjGnjzt8F34XPjAeLi0PiZQ==}
+  js2me-exports-post-build-script@5.0.2:
+    resolution: {integrity: sha512-zwX5ENUvA59jDjoJNsb+SyihomUlv8iz9QQQsQoPyRexYjoPhljHN7aTWWBODmxv4e4ueqV769HPAQTntIeFQw==}
 
   jsdom@26.1.0:
     resolution: {integrity: sha512-Cvc9WUhxSMEo4McES3P7oK3QaXldCfNWp7pl2NNeiIFlCoLr3kfq9kb1fxftiwk1FLV7CvpvDfonxtzUDeSOPg==}
@@ -4215,7 +4215,7 @@ snapshots:
 
   js2me-biome-config@1.0.5: {}
 
-  js2me-exports-post-build-script@5.0.1(@types/node@20.17.32):
+  js2me-exports-post-build-script@5.0.2(@types/node@20.17.32):
     dependencies:
       gh-release: 7.0.2(@types/node@20.17.32)
       simple-git: 3.27.0

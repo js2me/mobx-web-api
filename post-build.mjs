@@ -12,55 +12,54 @@ postBuildScript({
       return;
     }
 
+    if (!process.env.CI) {
+      // $(`pnpm test`);
+      $('pnpm changeset version');
+    }
 
-      if (!process.env.CI) {
-        // $(`pnpm test`);
-        $('pnpm changeset version');
-      }
+    // remove all test compiled files. TODO: find a better to ignore test files
+    $('rm dist/**/*.test.*');
 
-      // remove all test compiled files. TODO: find a better to ignore test files
-      $('rm dist/**/*.test.*');
+    const nextVersion = versionsDiff?.next ?? targetPackageJson.data.version;
 
-      const nextVersion = versionsDiff?.next ?? targetPackageJson.data.version;
+    const publishOutput = publishScript({
+      gitTagFormat: '<tag>',
+      nextVersion: nextVersion,
+      packageManager: 'pnpm',
+      commitAllCurrentChanges: true,
+      createTag: true,
+      safe: true,
+      onAlreadyPublishedThisVersion: () => {
+        console.warn(`${nextVersion} already published`);
+      },
+      cleanupCommand: 'pnpm clean',
+      targetPackageJson
+    });
 
-      const publishOutput = publishScript({
-        gitTagFormat: '<tag>',
-        nextVersion: nextVersion,
-        packageManager: 'pnpm',
-        commitAllCurrentChanges: true,
-        createTag: true,
-        safe: true,
-        onAlreadyPublishedThisVersion: () => {
-          console.warn(`${nextVersion} already published`);
-        },
-        cleanupCommand: 'pnpm clean',
-        targetPackageJson
-      });
+    if (process.env.CI) {
+      if (publishOutput?.publishedGitTag) {
+        const { whatChangesText } = getInfoFromChangelog(
+          nextVersion,
+          path.resolve(targetPackageJson.locationDir, '../CHANGELOG.md'),
+          targetPackageJson.repositoryUrl
+        );
 
-      if (process.env.CI) {
-        if (publishOutput?.publishedGitTag) {
-          const { whatChangesText } = getInfoFromChangelog(
-            nextVersion,
-            path.resolve(targetPackageJson.locationDir, '../CHANGELOG.md'),
-            targetPackageJson.repositoryUrl
-          );
-
-          publishGhRelease({
-            authToken: process.env.GITHUB_TOKEN,
-            body: whatChangesText,
-            owner: targetPackageJson.ghRepoData.user,
-            repo: targetPackageJson.ghRepoData.packageName,
-            version: nextVersion,
+        publishGhRelease({
+          authToken: process.env.GITHUB_TOKEN,
+          body: whatChangesText,
+          owner: targetPackageJson.ghRepoData.user,
+          repo: targetPackageJson.ghRepoData.packageName,
+          version: nextVersion,
+        })
+          .then((r) =>{
+            console.info('published new gh release',r)
           })
-            .then((r) =>{
-              console.info('published new gh release',r)
-            })
-            .catch((err) =>{
-              console.error('failed to publish new gh release', err);
-              process.exit(1);
-            })
-        }
-      } 
+          .catch((err) =>{
+            console.error('failed to publish new gh release', err);
+            process.exit(1);
+          })
+      }
+    } 
   }
 });
 
