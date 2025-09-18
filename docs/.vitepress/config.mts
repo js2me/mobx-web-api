@@ -66,7 +66,7 @@ export default defineConfig({
           { text: 'Network status', link: '/apis/network-status' },
           { text: 'Page visibility', link: '/apis/page-visibility' },
           { text: 'Media query', link: '/apis/media-query' },
-          { text: 'Screen orientation', link: '/apis/screen-orientation' },
+          { text: 'Screen info', link: '/apis/screen-info' },
           { text: 'Preferred languages', link: '/apis/preferred-languages' },
           { text: 'Geolocation', link: '/apis/geolocation' }, 
         ]
