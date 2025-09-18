@@ -5,42 +5,46 @@ interface ScreenOrientationInfo
   _atom?: IEnhancedAtom;
 }
 
+const screenOrientationKeys = [
+  'angle',
+  'type',
+] as const satisfies (keyof globalThis.ScreenOrientation)[];
+
 /**
  * The orientation of the screen without methods
  * [MDN Reference](https://developer.mozilla.org/docs/Web/API/Screen/orientation)
  */
-const screenOrientationInfo: ScreenOrientationInfo = (
-  ['angle', 'type'] as const
-).reduce((acc, key) => {
-  Object.defineProperty(acc, key, {
-    get() {
-      if (!acc._atom) {
-        acc._atom = createEnhancedAtom(
-          process.env.NODE_ENV === 'production'
-            ? ''
-            : 'screen-orientation-info-atom',
-          (atom) => {
-            globalThis.screen.orientation.addEventListener(
-              'change',
-              atom.reportChanged,
-            );
-          },
-          (atom) => {
-            globalThis.screen.orientation.removeEventListener(
-              'change',
-              atom.reportChanged,
-            );
-          },
-        );
-      }
+const screenOrientationInfo: ScreenOrientationInfo =
+  screenOrientationKeys.reduce((acc, key) => {
+    Object.defineProperty(acc, key, {
+      get() {
+        if (!acc._atom) {
+          acc._atom = createEnhancedAtom(
+            process.env.NODE_ENV === 'production'
+              ? ''
+              : 'screen-orientation-info-atom',
+            (atom) => {
+              globalThis.screen.orientation.addEventListener(
+                'change',
+                atom.reportChanged,
+              );
+            },
+            (atom) => {
+              globalThis.screen.orientation.removeEventListener(
+                'change',
+                atom.reportChanged,
+              );
+            },
+          );
+        }
 
-      acc._atom.reportObserved();
-      return globalThis.screen.orientation[key];
-    },
-  });
+        acc._atom.reportObserved();
+        return globalThis.screen.orientation[key];
+      },
+    });
 
-  return acc;
-}, {} as ScreenOrientationInfo);
+    return acc;
+  }, {} as ScreenOrientationInfo);
 
 /**
  * A screen, usually the one on which the current window is being rendered, and is obtained using window.screen.
@@ -57,9 +61,17 @@ export interface ScreenInfo extends Omit<globalThis.Screen, 'orientation'> {
   _atom?: IEnhancedAtom;
 }
 
-export const screenInfo: ScreenInfo = Object.keys(
-  globalThis.screen || {},
-).reduce((acc, screenKey) => {
+const screenKeys = [
+  'availWidth',
+  'availHeight',
+  'colorDepth',
+  'height',
+  'pixelDepth',
+  'width',
+  'orientation',
+] as const satisfies (keyof globalThis.Screen)[];
+
+export const screenInfo: ScreenInfo = screenKeys.reduce((acc, screenKey) => {
   Object.defineProperty(acc, screenKey, {
     get() {
       if (!acc._atom) {
