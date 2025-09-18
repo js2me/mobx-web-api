@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.1.0
+
+### Minor Changes
+
+- [`e4612d8`](https://github.com/js2me/mobx-web-api/commit/e4612d8891e10e2bdaeab704d2393a02ee046238) Thanks [@js2me](https://github.com/js2me)! - `track(query)` method for `mediaQuery` implementation
+
 ## 1.0.0
 
 ### Major Changes
