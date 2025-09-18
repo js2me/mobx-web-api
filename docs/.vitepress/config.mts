@@ -60,6 +60,17 @@ export default defineConfig({
           { text: 'Getting started', link: '/introduction/getting-started' },
         ],
       },
+      {
+        text: 'APIs',
+        items: [
+          { text: 'Network status', link: '/apis/network-status' },
+          { text: 'Page visibility', link: '/apis/page-visibility' },
+          { text: 'Media query', link: '/apis/media-query' },
+          { text: 'Screen orientation', link: '/apis/screen-orientation' },
+          { text: 'Preferred languages', link: '/apis/preferred-languages' },
+          { text: 'Geolocation', link: '/apis/geolocation' }, 
+        ]
+      }
     ],
 
     footer: {

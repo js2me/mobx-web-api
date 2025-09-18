@@ -36,16 +36,56 @@ const matchMediaTrackerFactory = {
   },
 };
 
-export interface MediaQuerySize {
-  width: number;
-  height: number;
-}
-
 export interface MediaQueryInfo {
   sizes: {
-    inner: MediaQuerySize;
-    outer: MediaQuerySize;
-    client: MediaQuerySize;
+    inner: {
+      /**
+       * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Window/innerWidth)
+       */
+      width: number;
+      /**
+       * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Window/innerHeight)
+       */
+      height: number;
+    };
+    outer: {
+      /**
+       * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Window/outerWidth)
+       */
+      width: number;
+      /**
+       * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Window/outerHeight)
+       */
+      height: number;
+    };
+    client: {
+      /**
+       *  **document?.documentElement?.clientWidth**
+       *
+       *  [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Element/clientWidth)
+       */
+      width: number;
+      /**
+       *  **document?.documentElement?.clientHeight**
+       *
+       *  [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Element/clientHeight)
+       */
+      height: number;
+    };
+    offset: {
+      /**
+       *  **document?.documentElement?.offsetWidth**
+       *
+       *  [MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/offsetWidth)
+       */
+      width: number;
+      /**
+       *  **document?.documentElement?.offsetHeight**
+       *
+       *  [MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLElement/offsetHeight)
+       */
+      height: number;
+    };
   };
   track(query: string): MatchMediaTracker;
   _atom?: IEnhancedAtom;
@@ -58,10 +98,10 @@ export const mediaQuery = makeObservable<MediaQueryInfo>(
         this._atom = createEnhancedAtom(
           process.env.NODE_ENV === 'production' ? '' : 'mediaQuery_sizes',
           (atom) => {
-            globalThis.addEventListener('resize', atom.reportChanged);
+            globalThis.addEventListener?.('resize', atom.reportChanged);
           },
           (atom) => {
-            globalThis.removeEventListener('resize', atom.reportChanged);
+            globalThis.removeEventListener?.('resize', atom.reportChanged);
           },
         );
       }
@@ -70,16 +110,20 @@ export const mediaQuery = makeObservable<MediaQueryInfo>(
 
       return {
         inner: {
-          width: window.innerWidth,
-          height: window.innerHeight,
+          width: globalThis.innerWidth ?? 0,
+          height: globalThis.innerHeight ?? 0,
         },
         outer: {
-          width: window.outerWidth,
-          height: window.outerHeight,
+          width: globalThis.outerWidth ?? 0,
+          height: globalThis.outerHeight ?? 0,
         },
         client: {
           width: globalThis.document?.documentElement?.clientWidth ?? 0,
           height: globalThis.document?.documentElement?.clientHeight ?? 0,
+        },
+        offset: {
+          width: globalThis.document?.documentElement?.offsetWidth ?? 0,
+          height: globalThis.document?.documentElement?.offsetHeight ?? 0,
         },
       };
     },
