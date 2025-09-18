@@ -1,5 +1,40 @@
-import { computed, type IAtom, makeObservable } from 'mobx';
-import { createEnhancedAtom } from 'yummies/mobx';
+import { computed, makeObservable } from 'mobx';
+import { createEnhancedAtom, type IEnhancedAtom } from 'yummies/mobx';
+
+export interface MatchMediaTracker {
+  matches: boolean;
+  _atom: IEnhancedAtom;
+}
+
+const matchMediaTrackerFactory = {
+  _atoms: new Map<string, MatchMediaTracker>(),
+  create(query: string): MatchMediaTracker {
+    if (this._atoms.has(query)) {
+      return this._atoms.get(query)!;
+    }
+
+    const mediaQueryList = globalThis.matchMedia(query);
+
+    const tracker: MatchMediaTracker = {
+      _atom: createEnhancedAtom(
+        process.env.NODE_ENV === 'production'
+          ? ''
+          : `matchMediaTracker_${query}`,
+        (atom) => {
+          mediaQueryList.addEventListener('change', atom.reportChanged);
+        },
+        (atom) => {
+          mediaQueryList.removeEventListener('change', atom.reportChanged);
+        },
+      ),
+      matches: mediaQueryList.matches,
+    };
+
+    this._atoms.set(query, tracker);
+
+    return tracker;
+  },
+};
 
 export interface MediaQuerySize {
   width: number;
@@ -12,8 +47,8 @@ export interface MediaQueryInfo {
     outer: MediaQuerySize;
     client: MediaQuerySize;
   };
-  track(): void;
-  _atom?: IAtom;
+  track(query: string): MatchMediaTracker;
+  _atom?: IEnhancedAtom;
 }
 
 export const mediaQuery = makeObservable<MediaQueryInfo>(
@@ -48,7 +83,9 @@ export const mediaQuery = makeObservable<MediaQueryInfo>(
         },
       };
     },
-    track() {},
+    track(query: string) {
+      return matchMediaTrackerFactory.create(query);
+    },
   },
   {
     sizes: computed.struct,
