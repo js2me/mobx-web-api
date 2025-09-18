@@ -1,11 +1,17 @@
 # mobx-web-api
 
+## 1.1.1
+
+### Patch Changes
+
+- [`6c78091`](https://github.com/js2me/mobx-web-api/commit/6c78091be2955f89941ffa7fe85de7140e0173e2) Thanks [@js2me](https://github.com/js2me)! - fixed screenInfo
+
 ## 1.1.0
 
 ### Minor Changes
 
-- [`e4612d8`](https://github.com/js2me/mobx-web-api/commit/e4612d8891e10e2bdaeab704d2393a02ee046238) Thanks [@js2me](https://github.com/js2me)! - `track(query)` method for `mediaQuery` implementation  
-- added `screenInfo`  
+- [`e4612d8`](https://github.com/js2me/mobx-web-api/commit/e4612d8891e10e2bdaeab704d2393a02ee046238) Thanks [@js2me](https://github.com/js2me)! - `track(query)` method for `mediaQuery` implementation
+- added `screenInfo`
 
 ## 1.0.0
 
