@@ -9,7 +9,7 @@
     "check": "npm run lint:check && npm run ts:check",
     "prebuild": "npm run clean && npm run check",
     "build:watch": "pnpm build && nodemon --delay 0.5 --watch src --ext ts,tsx --exec \"pnpm build\"",
-    "build": "vite build",
+    "build": "zshy",
     "pub": "pnpm build && node ./publish.mjs",
     "pub:patch": "PUBLISH_VERSION=patch pnpm pub",
     "pub:minor": "PUBLISH_VERSION=minor pnpm pub",
@@ -36,23 +36,33 @@
   "type": "module",
   "files": [
     "dist",
+    "**/*.js",
+    "**/*.mjs",
+    "**/*.cjs",
+    "**/*.d.ts",
+    "**/*.d.mts",
+    "**/*.d.cts",
+    "**/package.json",
     "LICENSE",
     "package.json",
     "README.md"
   ],
+  "zshy": {
+    "exports": {
+      "./package.json": "./package.json",
+      ".": "./src/index.ts"
+    }
+  },
+  "sideEffects": false,
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/index.d.cts",
   "exports": {
+    "./package.json": "./package.json",
     ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "types": "./dist/index.d.cts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "bugs": {
@@ -86,8 +96,8 @@
     "rimraf": "^6.0.1",
     "typescript": "^5.8.3",
     "unplugin-swc": "^1.5.1",
-    "vite": "^7.1.6",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "zshy": "^0.4.2"
   },
   "packageManager": "pnpm@9.5.0+sha512.140036830124618d624a2187b50d04289d5a087f326c9edfc0ccd733d76c4f52c3a313d4fc148794a2a9d81553016004e6742e8cf850670268a7387fc220c903"
 }
