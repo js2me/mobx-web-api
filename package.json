@@ -34,19 +34,6 @@
   "license": "MIT",
   "description": "Web API MobX bindings",
   "type": "module",
-  "files": [
-    "dist",
-    "**/*.js",
-    "**/*.mjs",
-    "**/*.cjs",
-    "**/*.d.ts",
-    "**/*.d.mts",
-    "**/*.d.cts",
-    "**/package.json",
-    "LICENSE",
-    "package.json",
-    "README.md"
-  ],
   "zshy": {
     "exports": {
       "./package.json": "./package.json",
@@ -99,5 +86,8 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     }
-  }
+  },
+  "files": [
+    "dist"
+  ]
 }
