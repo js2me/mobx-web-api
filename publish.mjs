@@ -4,10 +4,6 @@ import { $ } from 'js2me-exports-post-build-script/utils';
 import { PackageJsonManager } from 'js2me-exports-post-build-script/utils/package-json-manager';
 import path from 'path';
 
-if (!process.env.PUBLISH) {
-  return;
-}
-
 if (!process.env.CI) {
   // $(`pnpm test`);
   $('pnpm changeset version');
