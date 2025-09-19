@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.3.0
+
+### Minor Changes
+
+- [`cafb12c`](https://github.com/js2me/mobx-web-api/commit/cafb12cb03bc96f9fd6c3649e5931b120bb0ffbe) Thanks [@js2me](https://github.com/js2me)! - improved tree shaking for exports
+
 ## 1.2.1
 
 ### Patch Changes
