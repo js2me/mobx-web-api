@@ -1,4 +1,3 @@
-import { readFileSync } from 'fs';
 import { publishScript, getInfoFromChangelog, publishGhRelease } from 'js2me-exports-post-build-script';
 import { $ } from 'js2me-exports-post-build-script/utils';
 import { PackageJsonManager } from 'js2me-exports-post-build-script/utils/package-json-manager';
@@ -12,7 +11,7 @@ if (!process.env.CI) {
 // remove all test compiled files. TODO: find a better to ignore test files
 $('rm dist/**/*.test.*');
 
-const pckgJson = new PackageJsonManager(readFileSync('package.json', 'utf-8'));
+const pckgJson = new PackageJsonManager('package.json');
 
 const publishOutput = publishScript({
   gitTagFormat: '<tag>',
