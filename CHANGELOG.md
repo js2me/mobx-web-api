@@ -1,5 +1,15 @@
 # mobx-web-api
 
+## 1.2.0
+
+### Minor Changes
+
+- [`12ea4e3`](https://github.com/js2me/mobx-web-api/commit/12ea4e3ea0c0eb8e6b8916f32ea4eb403a868050) Thanks [@js2me](https://github.com/js2me)! - migrate to vite as build
+
+- [`a25127d`](https://github.com/js2me/mobx-web-api/commit/a25127de6f3a4b8a6c64abc8422438384390ac1d) Thanks [@js2me](https://github.com/js2me)! - added `preferredLanguages` web api
+
+- [`a25127d`](https://github.com/js2me/mobx-web-api/commit/a25127de6f3a4b8a6c64abc8422438384390ac1d) Thanks [@js2me](https://github.com/js2me)! - support errors and retries for permissions api
+
 ## 1.1.1
 
 ### Patch Changes
