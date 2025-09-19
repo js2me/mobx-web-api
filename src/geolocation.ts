@@ -20,13 +20,12 @@ export type GeolocationPosition = {
 };
 export type GeolocationError = globalThis.GeolocationPositionError;
 
-type GeolocationProvider = {
+export type GeolocationProvider = {
+  error?: unknown;
   position: GeolocationPosition;
   activate(): boolean;
   deactivate(): void;
 };
-
-let activeProvider: GeolocationProvider | undefined;
 
 export class BaseGeolocationProvider implements GeolocationProvider {
   private watchId: Maybe<number>;
@@ -44,9 +43,10 @@ export class BaseGeolocationProvider implements GeolocationProvider {
     timestamp: 0,
   };
 
-  constructor() {
+  constructor(private positionOptions?: PositionOptions) {
     makeObservable(this, {
       position: observable.deep,
+      error: computed.struct,
     });
 
     onBecomeObserved(this, 'position', () => {
@@ -57,18 +57,26 @@ export class BaseGeolocationProvider implements GeolocationProvider {
     });
   }
 
+  get error() {
+    return permissions.geolocation.error;
+  }
+
   activate() {
     if (globalThis.navigator && 'geolocation' in globalThis.navigator) {
       globalThis.navigator.geolocation.getCurrentPosition(
         action((position) => {
           this.position = position;
         }),
+        undefined,
+        this.positionOptions,
       );
 
       this.watchId = globalThis.navigator.geolocation.watchPosition(
         action((position) => {
           this.position = position;
         }),
+        undefined,
+        this.positionOptions,
       );
 
       return true;
@@ -86,7 +94,7 @@ export class BaseGeolocationProvider implements GeolocationProvider {
 
 export interface GeolocationInfo {
   permission: PermissionInfo;
-  activeProvider: GeolocationProvider;
+  provider?: GeolocationProvider;
   position: GeolocationPosition;
 }
 
@@ -95,15 +103,12 @@ export const geolocation = makeObservable<GeolocationInfo>(
     get permission() {
       return permissions.geolocation;
     },
-    get activeProvider() {
-      if (!activeProvider) {
-        activeProvider = new BaseGeolocationProvider();
+    get position(): GeolocationPosition {
+      if (!this.provider) {
+        this.provider = new BaseGeolocationProvider();
       }
 
-      return activeProvider;
-    },
-    get position(): GeolocationPosition {
-      return this.activeProvider.position;
+      return this.provider.position;
     },
   },
   {
