@@ -7,7 +7,7 @@
 
 [npm-image]: http://img.shields.io/npm/v/mobx-web-api.svg
 [npm-url]: http://npmjs.org/package/mobx-web-api
-[github-build-actions-image]: https://github.com/js2me/mobx-web-api/workflows/Build/badge.svg
+[github-build-actions-image]: https://github.com/js2me/mobx-web-api/workflows/Builds,%20tests%20&%20co/badge.svg
 [github-actions-url]: https://github.com/js2me/mobx-web-api/actions
 [download-image]: https://img.shields.io/npm/dm/mobx-web-api.svg
 [download-url]: https://npmjs.org/package/mobx-web-api
@@ -16,4 +16,6 @@
 
 Web API MobX bindings    
 
-# [Documentation](https://js2me.github.io/mobx-web-api/)   
+### [Read the docs →](https://js2me.github.io/mobx-web-api/)
+
+<br/>
