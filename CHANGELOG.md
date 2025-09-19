@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.2.1
+
+### Patch Changes
+
+- [`2e77d6a`](https://github.com/js2me/mobx-web-api/commit/2e77d6a61f100f7b49c301e2581096cc79388a8d) Thanks [@js2me](https://github.com/js2me)! - fix missing dist
+
 ## 1.2.0
 
 ### Minor Changes
