@@ -10,7 +10,7 @@
     "prebuild": "npm run clean && npm run check",
     "build:watch": "pnpm build && nodemon --delay 0.5 --watch src --ext ts,tsx --exec \"pnpm build\"",
     "build": "vite build",
-    "pub": "node ./publish.mjs",
+    "pub": "pnpm build && node ./publish.mjs",
     "pub:patch": "PUBLISH_VERSION=patch pnpm pub",
     "pub:minor": "PUBLISH_VERSION=minor pnpm pub",
     "pub:major": "PUBLISH_VERSION=major pnpm pub",
