@@ -109,6 +109,12 @@ export interface MediaQueryInfo {
    * ```
    */
   track(query: string): MatchMediaTracker;
+  /**
+   * Short form of [`mediaQuery.track(query).matches`](#track-query-string)
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/media-query.html#match-query-string)
+   */
+  match(query: string): boolean;
   _atom?: IEnhancedAtom;
 }
 
@@ -150,6 +156,9 @@ export const mediaQuery = makeObservable<MediaQueryInfo>(
     },
     track(query: string) {
       return matchMediaTrackerFactory.create(query);
+    },
+    match(query: string) {
+      return matchMediaTrackerFactory.create(query).matches;
     },
   },
   {

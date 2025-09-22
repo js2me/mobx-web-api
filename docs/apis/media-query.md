@@ -50,7 +50,6 @@ reaction(
 );
 ```
 
-
 #### `track(query: string)`   
 
 Tracks media query matching state   
@@ -78,7 +77,51 @@ reaction(
 )
 ```
 
+#### `match(query: string)`  
 
+This is short form of the [`mediaQuery.track(query).matches`](#track-query-string)  
+
+[MDN Reference](https://developer.mozilla.org/ru/docs/Web/API/Window/matchMedia)   
+
+Example:  
+```ts
+mediaQuery.match('(max-width: 767px)')
+```
+
+
+### Notes   
+
+You can create your own api using this object.  
+
+```ts
+import { mediaQuery } from "mobx-web-api";
+
+// referenced to https://gist.github.com/gokulkrishh/242e68d1ee94ad05f488
+export const mediaQueries = {
+  ...mediaQuery,
+  get mobiles() {
+    return mediaQuery.
+      match('(max-width: 767px)');
+  },
+  get tablets() {
+    return mediaQuery.
+      match('(min-width: 768px) and (max-width: 1024px)');
+  },
+  get desktops(){
+    return mediaQuery.
+      match('(min-width: 1025px)');
+  },
+  get largeDesktops() {
+    return mediaQuery.
+      match('(min-width: 1280px)');
+  }
+}
+
+...
+if (mediaQueries.mobiles) {
+  //
+}
+```
 
 
 
