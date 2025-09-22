@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.4.1
+
+### Patch Changes
+
+- [`da5aebc`](https://github.com/js2me/mobx-web-api/commit/da5aebc9006162ac84dc03de3e2c7ebe2cbaffd9) Thanks [@js2me](https://github.com/js2me)! - update docs
+
 ## 1.4.0
 
 ### Minor Changes
