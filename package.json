@@ -32,7 +32,7 @@
   ],
   "author": "js2me",
   "license": "MIT",
-  "description": "Web API MobX bindings",
+  "description": "⚡ Reactive browser APIs for MobX! Network, geolocation, media queries - zero config! 🚀",
   "type": "module",
   "zshy": {
     "exports": {

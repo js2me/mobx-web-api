@@ -14,8 +14,29 @@
 [bundlephobia-url]: https://bundlephobia.com/result?p=mobx-web-api
 [bundlephobia-image]: https://badgen.net/bundlephobia/minzip/mobx-web-api
 
-Web API MobX bindings    
+⚡ Reactive browser APIs for MobX! Network, geolocation, media queries - zero config! 🚀    
 
 ### [Read the docs →](https://js2me.github.io/mobx-web-api/)
 
 <br/>
+
+
+```ts
+import { mediaQuery, networkStatus } from "mobx-web-api";
+
+reaction(
+  () => mediaQuery.sizes.client.width,
+  (clientWidth) => {
+    console.log(`clientWidth changed to ${clientWidth}px`);
+  }
+)
+
+reaction(
+  () => networkStatus.isOffline,
+  (isOffline) => {
+    if (isOffline) {
+      console.log('Oh no you are offline :(')
+    }
+  }
+)
+```
