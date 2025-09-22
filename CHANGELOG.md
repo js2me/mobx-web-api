@@ -1,5 +1,15 @@
 # mobx-web-api
 
+## 1.4.0
+
+### Minor Changes
+
+- [`a2b1b52`](https://github.com/js2me/mobx-web-api/commit/a2b1b524f13b04d285b87d740b29e1d67763e637) Thanks [@js2me](https://github.com/js2me)! - added `match(query: string)` method for `mediaQuery`
+
+### Patch Changes
+
+- [`1cf60ac`](https://github.com/js2me/mobx-web-api/commit/1cf60ac0bac3e0fa4fa8290a5ce6a0bfd381dc70) Thanks [@js2me](https://github.com/js2me)! - fixed `track(query)` method in `mediaQuery`
+
 ## 1.3.0
 
 ### Minor Changes
