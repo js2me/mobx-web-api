@@ -7,10 +7,10 @@ export interface MatchMediaTracker {
 }
 
 const matchMediaTrackerFactory = {
-  _atoms: new Map<string, MatchMediaTracker>(),
+  _trackers: new Map<string, MatchMediaTracker>(),
   create(query: string): MatchMediaTracker {
-    if (this._atoms.has(query)) {
-      return this._atoms.get(query)!;
+    if (this._trackers.has(query)) {
+      return this._trackers.get(query)!;
     }
 
     const mediaQueryList = globalThis.matchMedia(query);
@@ -27,16 +27,24 @@ const matchMediaTrackerFactory = {
           mediaQueryList.removeEventListener('change', atom.reportChanged);
         },
       ),
-      matches: mediaQueryList.matches,
+      get matches() {
+        this._atom.reportObserved();
+        return mediaQueryList.matches;
+      },
     };
 
-    this._atoms.set(query, tracker);
+    this._trackers.set(query, tracker);
 
     return tracker;
   },
 };
 
 export interface MediaQueryInfo {
+  /**
+   * Object which contains all posible document sizes.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/media-query.html#sizes)
+   */
   sizes: {
     inner: {
       /**
@@ -87,6 +95,19 @@ export interface MediaQueryInfo {
       height: number;
     };
   };
+  /**
+   * Allows to track for media query (first argument)
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/media-query.html#track-query-string)
+   *
+   * [MDN Reference](https://developer.mozilla.org/ru/docs/Web/API/Window/matchMedia)
+   *
+   * @example
+   *
+   * ```ts
+   * console.log(mediaQuery.track("(min-width: 400px)").matches)
+   * ```
+   */
   track(query: string): MatchMediaTracker;
   _atom?: IEnhancedAtom;
 }

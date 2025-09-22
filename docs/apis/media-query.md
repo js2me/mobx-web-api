@@ -55,6 +55,8 @@ reaction(
 
 Tracks media query matching state   
 
+[MDN Reference](https://developer.mozilla.org/ru/docs/Web/API/Window/matchMedia)   
+
 ::: info Uses [Window.matchMedia](https://developer.mozilla.org/en-US/docs/Web/API/Window/matchMedia) if this property has observers
 :::
 
