@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.4.2
+
+### Patch Changes
+
+- [`319f28a`](https://github.com/js2me/mobx-web-api/commit/319f28a17e5c07f113b84e3cbaef0dbf61241a9a) Thanks [@js2me](https://github.com/js2me)! - fixed bundle zshy
+
 ## 1.4.1
 
 ### Patch Changes
