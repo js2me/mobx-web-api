@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.4.3
+
+### Patch Changes
+
+- [`a7101e1`](https://github.com/js2me/mobx-web-api/commit/a7101e15f6c20704de791d1609c37e6639ae713c) Thanks [@js2me](https://github.com/js2me)! - fix lazy observe for mobx
+
 ## 1.4.2
 
 ### Patch Changes
