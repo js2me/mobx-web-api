@@ -26,6 +26,10 @@ export default defineConfig({
   },
   base: `/${packageName}/`,
   lastUpdated: true,
+  sitemap: {
+    hostname: `https://${author}.github.io/${packageName}`,
+    lastmodDateOnly: false
+  },
   head: [
     ['link', { rel: 'icon', href: `/${packageName}/logo.png` }],
   ],
