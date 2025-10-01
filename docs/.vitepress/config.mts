@@ -20,6 +20,8 @@ export default defineConfig({
     if (pageData.description) {
       head.push(['meta', { property: 'og:description', content: pageData.description }]);   
     }
+    head.push(['meta', { name: 'google-site-verification', content: 'JxD6tLIOe-VWJEDgodbt1KAgrV1aeOaA-KPX4ROGE9g' }]);
+    head.push(['meta', { name: 'yandex-verification', content: '9b2ff87c73d8c832' }]);
     head.push(['meta', { property: 'og:image', content: `https://${author}.github.io/${packageName}/logo.png` }]);
 
     return head
