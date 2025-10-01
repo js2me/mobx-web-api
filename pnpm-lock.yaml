@@ -12,8 +12,8 @@ importers:
         specifier: ^6.13.6
         version: 6.13.7
       yummies:
-        specifier: ^5.4.8
-        version: 5.4.8(mobx@6.13.7)(react@19.1.1)
+        specifier: ^5.7.1
+        version: 5.7.1(mobx@6.13.7)(react@19.1.1)
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.2.4
@@ -55,8 +55,8 @@ importers:
         specifier: ^6.0.1
         version: 6.0.1
       sborshik:
-        specifier: ^1.0.10
-        version: 1.0.10(@types/node@20.17.32)
+        specifier: ^1.0.12
+        version: 1.0.12(@types/node@20.17.32)
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -2187,8 +2187,8 @@ packages:
     resolution: {integrity: sha512-xAg7SOnEhrm5zI3puOOKyy1OMcMlIJZYNJY7xLBwSze0UjhPLnWfj2GF2EpT0jmzaJKIWKHLsaSSajf35bcYnA==}
     engines: {node: '>=v12.22.7'}
 
-  sborshik@1.0.10:
-    resolution: {integrity: sha512-odrSTmg+R8ucIc1hK2lHioiZPuvbm/pbHgklANGZPTmJjZV+NnE6oTQ3T+ykvqmlkvfZEJGGrwKVrvlOQ2kZZg==}
+  sborshik@1.0.12:
+    resolution: {integrity: sha512-/BEfwgbFsh38dCLhdOuCM0b9SH83j7JhOcjqaK8Olr38SDkCwqROVrFqX9pUgmRglFAqqA+ImMfU9UVlc66SCg==}
     hasBin: true
 
   scheduler@0.26.0:
@@ -2668,8 +2668,8 @@ packages:
     resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
     engines: {node: '>=12'}
 
-  yummies@5.4.8:
-    resolution: {integrity: sha512-3rpVP1ECoB+vFJ5erXBBQV5Qy350/JC35HwywImxIv8gTwqz5/PfOc0r2Q5JlNlFXDfAso4eaugjUx1qJsPg4g==}
+  yummies@5.7.1:
+    resolution: {integrity: sha512-1bGP+kOyTUAi3pvfDCqzAL1ndXef1urW2XAftZFmhXsV8ytGXkOlEMKTOKpaLuNNOSKq/0Ct0qlZndqQTBH62g==}
     peerDependencies:
       mobx: ^6.12.4
       react: ^18 || ^19
@@ -4833,7 +4833,7 @@ snapshots:
     dependencies:
       xmlchars: 2.2.0
 
-  sborshik@1.0.10(@types/node@20.17.32):
+  sborshik@1.0.12(@types/node@20.17.32):
     dependencies:
       gh-release: 7.0.2(@types/node@20.17.32)
       simple-git: 3.27.0
@@ -5297,7 +5297,7 @@ snapshots:
       y18n: 5.0.8
       yargs-parser: 21.1.1
 
-  yummies@5.4.8(mobx@6.13.7)(react@19.1.1):
+  yummies@5.7.1(mobx@6.13.7)(react@19.1.1):
     dependencies:
       class-variance-authority: 0.7.1
       clsx: 2.1.1
