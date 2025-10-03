@@ -1,57 +1,32 @@
-import { defineConfig } from 'vitepress';
-
 import path from 'path';
 import fs from 'fs';
 
-const { version, name: packageName, author, license } = JSON.parse(
+import { defineGhPagesDocConfig } from "sborshik/vitepress/define-gh-pages-doc-config";
+
+
+const pckgJson = JSON.parse(
   fs.readFileSync(
     path.resolve(__dirname, '../../package.json'),
     { encoding: 'utf-8' },
   ),
 );
 
-export default defineConfig({
-  title: packageName.replace(/-/g, ' '),
+export default defineGhPagesDocConfig(pckgJson, {
   appearance: 'dark',
-  description: `${packageName.replace(/-/g, ' ')} documentation`,
-  transformHead: ({ pageData, head }) => {
-    head.push(['meta', { property: 'og:site_name', content: packageName }]);
-    head.push(['meta', { property: 'og:title', content: pageData.title }]);
-    if (pageData.description) {
-      head.push(['meta', { property: 'og:description', content: pageData.description }]);   
-    }
-    head.push(['meta', { name: 'google-site-verification', content: 'JxD6tLIOe-VWJEDgodbt1KAgrV1aeOaA-KPX4ROGE9g' }]);
-    head.push(['meta', { name: 'yandex-verification', content: '9b2ff87c73d8c832' }]);
-    head.push(['meta', { property: 'og:image', content: `https://${author}.github.io/${packageName}/logo.png` }]);
-
-    return head
-  },
-  base: `/${packageName}/`,
-  lastUpdated: true,
-  sitemap: {
-    hostname: `https://${author}.github.io/${packageName}`,
-    lastmodDateOnly: false
-  },
-  head: [
-    ['link', { rel: 'icon', href: `/${packageName}/logo.png` }],
-  ],
+  createdYear: '2025',
   themeConfig: {
-    logo: '/logo.png',
-    search: {
-      provider: 'local'
-    },
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Introduction', link: '/introduction/getting-started' },
-      { text: 'Changelog', link: `https://github.com/${author}/${packageName}/releases` },
+      { text: 'Changelog', link: `https://github.com/${pckgJson.author}/${pckgJson.name}/releases` },
       {
-        text: `${version}`,
+        text: `${pckgJson.version}`,
         items: [
           {
             items: [
               {
-                text: `${version}`,
-                link: `https://github.com/${author}/${packageName}/releases/tag/${version}`,
+                text: `${pckgJson.version}`,
+                link: `https://github.com/${pckgJson.author}/${pckgJson.name}/releases/tag/${pckgJson.version}`,
               },
             ],
           },
@@ -77,15 +52,6 @@ export default defineConfig({
           { text: 'Geolocation', link: '/apis/geolocation' }, 
         ]
       }
-    ],
-
-    footer: {
-      message: `Released under the ${license} License.`,
-      copyright: `Copyright © 2025-PRESENT ${author}`,
-    },
-
-    socialLinks: [
-      { icon: 'github', link: `https://github.com/${author}/${packageName}` },
     ],
   },
 });
