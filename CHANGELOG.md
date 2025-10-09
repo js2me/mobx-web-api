@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.5.0
+
+### Minor Changes
+
+- [`d0a921c`](https://github.com/js2me/mobx-web-api/commit/d0a921c2f4756d2c904607292b6cba193ec754dd) Thanks [@js2me](https://github.com/js2me)! - support SSR for networkStatus and pageVisibility
+
 ## 1.4.3
 
 ### Patch Changes
