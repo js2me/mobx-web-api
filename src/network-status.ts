@@ -8,6 +8,10 @@ export interface NetworkStatus {
 
 export const networkStatus: NetworkStatus = {
   get isOnline() {
+    if (!globalThis.navigator) {
+      return true;
+    }
+
     if (!this._atom) {
       this._atom = createEnhancedAtom(
         process.env.NODE_ENV === 'production' ? '' : 'networkStatus',
@@ -23,6 +27,7 @@ export const networkStatus: NetworkStatus = {
     }
 
     this._atom.reportObserved();
+
     return globalThis.navigator.onLine;
   },
   get isOffline() {
