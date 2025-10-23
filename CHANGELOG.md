@@ -1,5 +1,13 @@
 # mobx-web-api
 
+## 1.6.0
+
+### Minor Changes
+
+- [`e30ddf0`](https://github.com/js2me/mobx-web-api/commit/e30ddf0d10c41b7993903b4dc99e5a8c92ba8c13) Thanks [@js2me](https://github.com/js2me)! - [internal] unify bundle script (sborshik + vite)
+
+- [`e30ddf0`](https://github.com/js2me/mobx-web-api/commit/e30ddf0d10c41b7993903b4dc99e5a8c92ba8c13) Thanks [@js2me](https://github.com/js2me)! - [internal] unify docs (sborshik)
+
 ## 1.5.0
 
 ### Minor Changes
