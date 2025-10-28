@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.7.0
+
+### Minor Changes
+
+- [`71796c9`](https://github.com/js2me/mobx-web-api/commit/71796c9c528463d916b21721f59080d448605cd8) Thanks [@js2me](https://github.com/js2me)! - added `createScrollData` and `ScrollData` mechanism
+
 ## 1.6.0
 
 ### Minor Changes
