@@ -1,28 +1,76 @@
 import { createEnhancedAtom } from 'yummies/mobx';
 
-export type ScrollDataMapperConfig = Record<string, (scrollTop: number) => any>;
+type InternalScrollData = {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+  scrollY: number;
+  scrollX: number;
+  scrollHeight: number;
+  scrollWidth: number;
+};
+
+export type ScrollDataMapperConfig = Record<
+  string,
+  (internalScrollData: InternalScrollData) => any
+>;
 
 export type ScrollData<TMapperConfig extends ScrollDataMapperConfig = {}> = {
   [K in keyof TMapperConfig]: ReturnType<TMapperConfig[K]>;
-} & {
-  scrollTop: number;
-};
+} & InternalScrollData;
 
 export const createScrollData = <TMappedData extends ScrollDataMapperConfig>(
   element: HTMLElement,
   opts?: {
-    scrollingElement?: Window | HTMLElement | Document;
+    scrollingElement?: Window | HTMLElement;
     mapper?: TMappedData;
   },
 ): ScrollData<TMappedData> => {
   const scrollingElement = opts?.scrollingElement || window;
   const mapper = opts?.mapper ?? {};
 
-  let lastScrollTop = element.scrollTop;
+  const collectScrollData = () => {
+    const internalScrollData = {
+      top: element.scrollTop,
+      left: element.scrollLeft,
+      width: element.scrollWidth,
+      height: element.scrollHeight,
+      scrollY: 0,
+      scrollX: 0,
+      scrollHeight: 0,
+      scrollWidth: 0,
+    };
 
-  const scrollHandler = () => {
-    if (lastScrollTop !== element.scrollTop) {
-      lastScrollTop = element.scrollTop;
+    if ('scrollY' in scrollingElement) {
+      internalScrollData.scrollY = scrollingElement.scrollY;
+      internalScrollData.scrollX = scrollingElement.scrollX;
+      internalScrollData.scrollHeight = scrollingElement.innerHeight;
+      internalScrollData.scrollWidth = scrollingElement.innerWidth;
+    } else {
+      internalScrollData.scrollY = scrollingElement.scrollTop;
+      internalScrollData.scrollX = scrollingElement.scrollLeft;
+      internalScrollData.scrollHeight = scrollingElement.scrollHeight;
+      internalScrollData.scrollWidth = scrollingElement.scrollWidth;
+    }
+    return internalScrollData;
+  };
+
+  const elementScrollData = collectScrollData();
+
+  const updateHandler = () => {
+    let changed = false;
+
+    Object.entries(collectScrollData()).forEach(([key, value]) => {
+      // @ts-expect-error
+      if (elementScrollData[key] !== value) {
+        // @ts-expect-error
+        elementScrollData[key] = value;
+        changed = true;
+      }
+    });
+
+    if (changed) {
       atom.reportChanged();
     }
   };
@@ -30,10 +78,12 @@ export const createScrollData = <TMappedData extends ScrollDataMapperConfig>(
   const atom = createEnhancedAtom(
     '',
     () => {
-      scrollingElement.addEventListener('scroll', scrollHandler);
+      scrollingElement.addEventListener('scroll', updateHandler);
+      scrollingElement.addEventListener('resize', updateHandler);
     },
     () => {
-      scrollingElement.removeEventListener('scroll', scrollHandler);
+      scrollingElement.removeEventListener('scroll', updateHandler);
+      scrollingElement.removeEventListener('resize', updateHandler);
     },
   );
 
@@ -42,15 +92,11 @@ export const createScrollData = <TMappedData extends ScrollDataMapperConfig>(
     {
       get(_, property) {
         atom.reportObserved();
-
-        if (property === 'scrollTop') {
-          return lastScrollTop;
-        }
-
-        return (mapper as TMappedData)[property as keyof TMappedData]?.(
-          lastScrollTop,
+        return (
+          // @ts-expect-error
+          elementScrollData[property] ?? mapper[property]?.(elementScrollData)
         );
       },
     },
-  ) as unknown as ScrollData<TMappedData>;
+  ) as ScrollData<TMappedData>;
 };
