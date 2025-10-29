@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.8.0
+
+### Minor Changes
+
+- [`214935c`](https://github.com/js2me/mobx-web-api/commit/214935c16b1a65b5e6be3d68d3b7171edeca0fdc) Thanks [@js2me](https://github.com/js2me)! - modified `createScrollData` (returned data) and mapper
+
 ## 1.7.0
 
 ### Minor Changes
