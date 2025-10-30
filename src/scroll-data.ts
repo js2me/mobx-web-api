@@ -1,4 +1,5 @@
-import { createEnhancedAtom } from 'yummies/mobx';
+import { createEnhancedAtom, createRef, isRef, type Ref } from 'yummies/mobx';
+import type { Maybe } from 'yummies/utils/types';
 
 type InternalScrollData = {
   top: number;
@@ -21,37 +22,52 @@ export type ScrollData<TMapperConfig extends ScrollDataMapperConfig = {}> = {
 } & InternalScrollData;
 
 export const createScrollData = <TMappedData extends ScrollDataMapperConfig>(
-  element: HTMLElement,
+  element: HTMLElement | Ref<HTMLElement>,
   opts?: {
-    scrollingElement?: Window | HTMLElement;
+    scrollingElement?: Window | HTMLElement | Ref<HTMLElement | Window>;
     mapper?: TMappedData;
   },
 ): ScrollData<TMappedData> => {
-  const scrollingElement = opts?.scrollingElement || window;
-  const mapper = opts?.mapper ?? {};
+  let lastUsedScrollingElement: Maybe<HTMLElement | Window>;
+
+  const { mapper = {}, scrollingElement = globalThis.window } = opts ?? {};
+
+  const elementRef = isRef<HTMLElement>(element)
+    ? element
+    : createRef({ initial: element });
+
+  const scrollingElementRef = isRef<HTMLElement | Window>(scrollingElement)
+    ? scrollingElement
+    : createRef({ initial: scrollingElement });
 
   const collectScrollData = () => {
     const internalScrollData = {
-      top: element.scrollTop,
-      left: element.scrollLeft,
-      width: element.scrollWidth,
-      height: element.scrollHeight,
+      top: elementRef.current?.scrollTop ?? 0,
+      left: elementRef.current?.scrollLeft ?? 0,
+      width: elementRef.current?.scrollWidth ?? 0,
+      height: elementRef.current?.scrollHeight ?? 0,
       scrollY: 0,
       scrollX: 0,
       scrollHeight: 0,
       scrollWidth: 0,
     };
 
-    if ('scrollY' in scrollingElement) {
-      internalScrollData.scrollY = scrollingElement.scrollY;
-      internalScrollData.scrollX = scrollingElement.scrollX;
-      internalScrollData.scrollHeight = scrollingElement.innerHeight;
-      internalScrollData.scrollWidth = scrollingElement.innerWidth;
+    if (!scrollingElementRef.current) {
+      return internalScrollData;
+    }
+
+    if ('scrollY' in scrollingElementRef.current) {
+      internalScrollData.scrollY = scrollingElementRef.current?.scrollY ?? 0;
+      internalScrollData.scrollX = scrollingElementRef.current?.scrollX ?? 0;
+      internalScrollData.scrollHeight = scrollingElementRef.current.innerHeight;
+      internalScrollData.scrollWidth = scrollingElementRef.current.innerWidth;
     } else {
-      internalScrollData.scrollY = scrollingElement.scrollTop;
-      internalScrollData.scrollX = scrollingElement.scrollLeft;
-      internalScrollData.scrollHeight = scrollingElement.scrollHeight;
-      internalScrollData.scrollWidth = scrollingElement.scrollWidth;
+      internalScrollData.scrollY = scrollingElementRef.current?.scrollTop ?? 0;
+      internalScrollData.scrollX = scrollingElementRef.current?.scrollLeft ?? 0;
+      internalScrollData.scrollHeight =
+        scrollingElementRef.current?.scrollHeight ?? 0;
+      internalScrollData.scrollWidth =
+        scrollingElementRef.current?.scrollWidth ?? 0;
     }
     return internalScrollData;
   };
@@ -75,15 +91,34 @@ export const createScrollData = <TMappedData extends ScrollDataMapperConfig>(
     }
   };
 
+  const updateListeners = (scrollingElement: Maybe<HTMLElement | Window>) => {
+    if (lastUsedScrollingElement) {
+      lastUsedScrollingElement.removeEventListener('scroll', updateHandler);
+      lastUsedScrollingElement.removeEventListener('resize', updateHandler);
+    }
+
+    if (scrollingElement) {
+      lastUsedScrollingElement = scrollingElement;
+      lastUsedScrollingElement.addEventListener('scroll', updateHandler);
+      lastUsedScrollingElement.addEventListener('resize', updateHandler);
+    } else {
+      lastUsedScrollingElement = null;
+    }
+  };
+
   const atom = createEnhancedAtom(
     '',
     () => {
-      scrollingElement.addEventListener('scroll', updateHandler);
-      scrollingElement.addEventListener('resize', updateHandler);
+      updateListeners(scrollingElementRef.current);
+      scrollingElementRef.listeners.add(atom.reportChanged);
+      scrollingElementRef.listeners.add(updateListeners);
+      elementRef.listeners.add(atom.reportChanged);
     },
     () => {
-      scrollingElement.removeEventListener('scroll', updateHandler);
-      scrollingElement.removeEventListener('resize', updateHandler);
+      scrollingElementRef.listeners.delete(atom.reportChanged);
+      scrollingElementRef.listeners.delete(updateListeners);
+      elementRef.listeners.delete(atom.reportChanged);
+      updateListeners(null);
     },
   );
 
