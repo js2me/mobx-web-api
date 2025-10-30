@@ -24,22 +24,21 @@ export type ScrollData<TMapperConfig extends ScrollDataMapperConfig = {}> = {
 export const createScrollData = <TMappedData extends ScrollDataMapperConfig>(
   element: HTMLElement | Ref<HTMLElement>,
   opts?: {
-    scrollingElement?: Window | HTMLElement | Ref<HTMLElement>;
+    scrollingElement?: Window | HTMLElement | Ref<HTMLElement | Window>;
     mapper?: TMappedData;
   },
 ): ScrollData<TMappedData> => {
-  const scrollingElement = opts?.scrollingElement || window;
-  const mapper = opts?.mapper ?? {};
+  let lastUsedScrollingElement: Maybe<HTMLElement | Window>;
+
+  const { mapper = {}, scrollingElement = globalThis.window } = opts ?? {};
 
   const elementRef = isRef<HTMLElement>(element)
     ? element
     : createRef({ initial: element });
 
-  const scrollingElementRef: Ref<HTMLElement | Window> = isRef<any>(
-    scrollingElement,
-  )
+  const scrollingElementRef = isRef<HTMLElement | Window>(scrollingElement)
     ? scrollingElement
-    : createRef<any>({ initial: scrollingElement });
+    : createRef({ initial: scrollingElement });
 
   const collectScrollData = () => {
     const internalScrollData = {
@@ -92,32 +91,34 @@ export const createScrollData = <TMappedData extends ScrollDataMapperConfig>(
     }
   };
 
-  let usedScrollingElement: Maybe<HTMLElement | Window>;
+  const updateListeners = (scrollingElement: Maybe<HTMLElement | Window>) => {
+    if (lastUsedScrollingElement) {
+      lastUsedScrollingElement.removeEventListener('scroll', updateHandler);
+      lastUsedScrollingElement.removeEventListener('resize', updateHandler);
+    }
 
-  const setupListeners = (scrollingElement: Maybe<HTMLElement | Window>) => {
     if (scrollingElement) {
-      usedScrollingElement = scrollingElement;
-      scrollingElement.addEventListener('scroll', updateHandler);
-      scrollingElement.addEventListener('resize', updateHandler);
+      lastUsedScrollingElement = scrollingElement;
+      lastUsedScrollingElement.addEventListener('scroll', updateHandler);
+      lastUsedScrollingElement.addEventListener('resize', updateHandler);
+    } else {
+      lastUsedScrollingElement = null;
     }
   };
 
   const atom = createEnhancedAtom(
     '',
     () => {
-      if (scrollingElementRef.current) {
-        setupListeners(scrollingElementRef.current);
-      } else {
-        scrollingElementRef.listeners.add(setupListeners);
-      }
+      updateListeners(scrollingElementRef.current);
+      scrollingElementRef.listeners.add(atom.reportChanged);
+      scrollingElementRef.listeners.add(updateListeners);
+      elementRef.listeners.add(atom.reportChanged);
     },
     () => {
-      scrollingElementRef.listeners.delete(setupListeners);
-
-      if (usedScrollingElement) {
-        usedScrollingElement.removeEventListener('scroll', updateHandler);
-        usedScrollingElement.removeEventListener('resize', updateHandler);
-      }
+      scrollingElementRef.listeners.delete(atom.reportChanged);
+      scrollingElementRef.listeners.delete(updateListeners);
+      elementRef.listeners.delete(atom.reportChanged);
+      updateListeners(null);
     },
   );
 
