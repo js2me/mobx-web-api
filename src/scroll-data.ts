@@ -1,4 +1,5 @@
-import { createEnhancedAtom } from 'yummies/mobx';
+import { createEnhancedAtom, createRef, isRef, type Ref } from 'yummies/mobx';
+import type { Maybe } from 'yummies/utils/types';
 
 type InternalScrollData = {
   top: number;
@@ -21,37 +22,53 @@ export type ScrollData<TMapperConfig extends ScrollDataMapperConfig = {}> = {
 } & InternalScrollData;
 
 export const createScrollData = <TMappedData extends ScrollDataMapperConfig>(
-  element: HTMLElement,
+  element: HTMLElement | Ref<HTMLElement>,
   opts?: {
-    scrollingElement?: Window | HTMLElement;
+    scrollingElement?: Window | HTMLElement | Ref<HTMLElement>;
     mapper?: TMappedData;
   },
 ): ScrollData<TMappedData> => {
   const scrollingElement = opts?.scrollingElement || window;
   const mapper = opts?.mapper ?? {};
 
+  const elementRef = isRef<HTMLElement>(element)
+    ? element
+    : createRef({ initial: element });
+
+  const scrollingElementRef: Ref<HTMLElement | Window> = isRef<any>(
+    scrollingElement,
+  )
+    ? scrollingElement
+    : createRef<any>({ initial: scrollingElement });
+
   const collectScrollData = () => {
     const internalScrollData = {
-      top: element.scrollTop,
-      left: element.scrollLeft,
-      width: element.scrollWidth,
-      height: element.scrollHeight,
+      top: elementRef.current?.scrollTop ?? 0,
+      left: elementRef.current?.scrollLeft ?? 0,
+      width: elementRef.current?.scrollWidth ?? 0,
+      height: elementRef.current?.scrollHeight ?? 0,
       scrollY: 0,
       scrollX: 0,
       scrollHeight: 0,
       scrollWidth: 0,
     };
 
-    if ('scrollY' in scrollingElement) {
-      internalScrollData.scrollY = scrollingElement.scrollY;
-      internalScrollData.scrollX = scrollingElement.scrollX;
-      internalScrollData.scrollHeight = scrollingElement.innerHeight;
-      internalScrollData.scrollWidth = scrollingElement.innerWidth;
+    if (!scrollingElementRef.current) {
+      return internalScrollData;
+    }
+
+    if ('scrollY' in scrollingElementRef.current) {
+      internalScrollData.scrollY = scrollingElementRef.current?.scrollY ?? 0;
+      internalScrollData.scrollX = scrollingElementRef.current?.scrollX ?? 0;
+      internalScrollData.scrollHeight = scrollingElementRef.current.innerHeight;
+      internalScrollData.scrollWidth = scrollingElementRef.current.innerWidth;
     } else {
-      internalScrollData.scrollY = scrollingElement.scrollTop;
-      internalScrollData.scrollX = scrollingElement.scrollLeft;
-      internalScrollData.scrollHeight = scrollingElement.scrollHeight;
-      internalScrollData.scrollWidth = scrollingElement.scrollWidth;
+      internalScrollData.scrollY = scrollingElementRef.current?.scrollTop ?? 0;
+      internalScrollData.scrollX = scrollingElementRef.current?.scrollLeft ?? 0;
+      internalScrollData.scrollHeight =
+        scrollingElementRef.current?.scrollHeight ?? 0;
+      internalScrollData.scrollWidth =
+        scrollingElementRef.current?.scrollWidth ?? 0;
     }
     return internalScrollData;
   };
@@ -75,15 +92,32 @@ export const createScrollData = <TMappedData extends ScrollDataMapperConfig>(
     }
   };
 
+  let usedScrollingElement: Maybe<HTMLElement | Window>;
+
+  const setupListeners = (scrollingElement: Maybe<HTMLElement | Window>) => {
+    if (scrollingElement) {
+      usedScrollingElement = scrollingElement;
+      scrollingElement.addEventListener('scroll', updateHandler);
+      scrollingElement.addEventListener('resize', updateHandler);
+    }
+  };
+
   const atom = createEnhancedAtom(
     '',
     () => {
-      scrollingElement.addEventListener('scroll', updateHandler);
-      scrollingElement.addEventListener('resize', updateHandler);
+      if (scrollingElementRef.current) {
+        setupListeners(scrollingElementRef.current);
+      } else {
+        scrollingElementRef.listeners.add(setupListeners);
+      }
     },
     () => {
-      scrollingElement.removeEventListener('scroll', updateHandler);
-      scrollingElement.removeEventListener('resize', updateHandler);
+      scrollingElementRef.listeners.delete(setupListeners);
+
+      if (usedScrollingElement) {
+        usedScrollingElement.removeEventListener('scroll', updateHandler);
+        usedScrollingElement.removeEventListener('resize', updateHandler);
+      }
     },
   );
 
