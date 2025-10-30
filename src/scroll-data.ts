@@ -1,4 +1,4 @@
-import { createEnhancedAtom, createRef, isRef, type Ref } from 'yummies/mobx';
+import { createEnhancedAtom, type Ref, toRef } from 'yummies/mobx';
 import type { Maybe } from 'yummies/utils/types';
 
 type InternalScrollData = {
@@ -21,10 +21,13 @@ export type ScrollData<TMapperConfig extends ScrollDataMapperConfig = {}> = {
   [K in keyof TMapperConfig]: ReturnType<TMapperConfig[K]>;
 } & InternalScrollData;
 
-export const createScrollData = <TMappedData extends ScrollDataMapperConfig>(
-  element: HTMLElement | Ref<HTMLElement>,
+export const createScrollData = <
+  TElement extends HTMLElement,
+  TMappedData extends ScrollDataMapperConfig,
+>(
+  element: TElement | Ref<TElement, any>,
   opts?: {
-    scrollingElement?: Window | HTMLElement | Ref<HTMLElement | Window>;
+    scrollingElement?: Window | HTMLElement | Ref<HTMLElement | Window, any>;
     mapper?: TMappedData;
   },
 ): ScrollData<TMappedData> => {
@@ -32,13 +35,8 @@ export const createScrollData = <TMappedData extends ScrollDataMapperConfig>(
 
   const { mapper = {}, scrollingElement = globalThis.window } = opts ?? {};
 
-  const elementRef = isRef<HTMLElement>(element)
-    ? element
-    : createRef({ initial: element });
-
-  const scrollingElementRef = isRef<HTMLElement | Window>(scrollingElement)
-    ? scrollingElement
-    : createRef({ initial: scrollingElement });
+  const elementRef = toRef(element);
+  const scrollingElementRef = toRef(scrollingElement);
 
   const collectScrollData = () => {
     const internalScrollData = {
