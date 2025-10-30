@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.9.0
+
+### Minor Changes
+
+- [#15](https://github.com/js2me/mobx-web-api/pull/15) [`c7d4504`](https://github.com/js2me/mobx-web-api/commit/c7d45045859e6d6f50ac9882d6f3660027eedf36) Thanks [@js2me](https://github.com/js2me)! - added support for `Ref\createRef` for `createScrollData`
+
 ## 1.8.0
 
 ### Minor Changes
