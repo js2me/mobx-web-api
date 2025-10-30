@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.9.1
+
+### Patch Changes
+
+- [`1151f20`](https://github.com/js2me/mobx-web-api/commit/1151f20aa74734e3ebaaa8be1ef8362452af45e9) Thanks [@js2me](https://github.com/js2me)! - fixed typings for scrollData/createScrollData (work with refs)
+
 ## 1.9.0
 
 ### Minor Changes
