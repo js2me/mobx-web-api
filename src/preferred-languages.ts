@@ -5,7 +5,7 @@ import {
   observable,
 } from 'mobx';
 import { createEnhancedAtom, type IEnhancedAtom } from 'yummies/mobx';
-import type { Maybe } from 'yummies/utils/types';
+import type { Maybe } from 'yummies/types';
 
 export interface PreferredLanguages {
   _atom?: IEnhancedAtom<{

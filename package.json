@@ -47,7 +47,7 @@
     "mobx": "^6.13.6"
   },
   "dependencies": {
-    "yummies": "^5.15.1"
+    "yummies": "^6.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",

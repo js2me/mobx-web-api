@@ -1,5 +1,5 @@
 import { createEnhancedAtom, type Ref, toRef } from 'yummies/mobx';
-import type { Maybe } from 'yummies/utils/types';
+import type { Maybe } from 'yummies/types';
 
 type InternalScrollData = {
   top: number;

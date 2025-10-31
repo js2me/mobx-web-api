@@ -6,7 +6,7 @@ import {
   onBecomeObserved,
   onBecomeUnobserved,
 } from 'mobx';
-import type { Maybe } from 'yummies/utils/types';
+import type { Maybe } from 'yummies/types';
 import { type PermissionInfo, permissions } from './permissions.js';
 
 export type GeolocationPosition = {
