@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.10.0
+
+### Minor Changes
+
+- [`736f640`](https://github.com/js2me/mobx-web-api/commit/736f6406a4e68c4d21d17a4f19686a38848b53c1) Thanks [@js2me](https://github.com/js2me)! - [internal] migration to yummies 6.x
+
 ## 1.9.1
 
 ### Patch Changes
