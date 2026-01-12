@@ -40,6 +40,7 @@ export default defineDocsVitepressConfig(configs, {
           { text: 'Page visibility', link: '/apis/page-visibility' },
           { text: 'Media query', link: '/apis/media-query' },
           { text: 'Screen info', link: '/apis/screen-info' },
+          { text: 'Scroll data', link: '/apis/scroll-data' },
           { text: 'Preferred languages', link: '/apis/preferred-languages' },
           { text: 'Geolocation', link: '/apis/geolocation' }, 
         ]
