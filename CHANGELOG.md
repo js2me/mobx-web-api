@@ -1,5 +1,19 @@
 # mobx-web-api
 
+## 1.11.0
+
+### Minor Changes
+
+- [`96beac1`](https://github.com/js2me/mobx-web-api/commit/96beac1e84f126c3ea28b463caa03878d7383b22) Thanks [@js2me](https://github.com/js2me)! - add new `connectionInfo` web API utility for reactive network quality and data-saver status
+
+- [`96beac1`](https://github.com/js2me/mobx-web-api/commit/96beac1e84f126c3ea28b463caa03878d7383b22) Thanks [@js2me](https://github.com/js2me)! - add new `viewportInfo` web API utility for reactive VisualViewport dimensions, offsets and scale
+
+- [`96beac1`](https://github.com/js2me/mobx-web-api/commit/96beac1e84f126c3ea28b463caa03878d7383b22) Thanks [@js2me](https://github.com/js2me)! - add new `batteryStatus` web API utility for reactive battery level and charging state tracking
+
+- [`96beac1`](https://github.com/js2me/mobx-web-api/commit/96beac1e84f126c3ea28b463caa03878d7383b22) Thanks [@js2me](https://github.com/js2me)! - add new `storageData` web API utility for reactive local/session storage keys with optional prefix
+
+- [`96beac1`](https://github.com/js2me/mobx-web-api/commit/96beac1e84f126c3ea28b463caa03878d7383b22) Thanks [@js2me](https://github.com/js2me)! - add new `colorScheme` web API utility for reactive preferred color scheme tracking
+
 ## 1.10.0
 
 ### Minor Changes
