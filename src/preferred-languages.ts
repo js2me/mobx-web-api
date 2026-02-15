@@ -37,6 +37,12 @@ const keysMapping = [
   keyof globalThis.NavigatorLanguage,
 ][];
 
+/**
+ * Reactive preferred languages information for MobX consumers.
+ *
+ * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/preferred-languages.html)
+ * [MDN NavigatorLanguage](https://developer.mozilla.org/en-US/docs/Web/API/NavigatorLanguage)
+ */
 export const preferredLanguages = makeObservable(
   keysMapping.reduce(
     (acc, [mappingKey, navigatorKey]) => {

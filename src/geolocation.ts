@@ -86,18 +86,34 @@ export class BaseGeolocationProvider implements GeolocationProvider {
   }
 
   deactivate(): void {
-    if (this.watchId != null) {
+    if (
+      this.watchId != null &&
+      globalThis.navigator &&
+      'geolocation' in globalThis.navigator
+    ) {
       globalThis.navigator.geolocation.clearWatch(this.watchId);
     }
   }
 }
 
+/**
+ * Reactive geolocation info API.
+ *
+ * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/geolocation.html)
+ * [MDN Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API)
+ */
 export interface GeolocationInfo {
   permission: PermissionInfo;
   provider?: GeolocationProvider;
   position: GeolocationPosition;
 }
 
+/**
+ * Reactive geolocation API for MobX consumers.
+ *
+ * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/geolocation.html)
+ * [MDN Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API)
+ */
 export const geolocation = makeObservable<GeolocationInfo>(
   {
     get permission() {

@@ -21,6 +21,11 @@ export type ScrollData<TMapperConfig extends ScrollDataMapperConfig = {}> = {
   [K in keyof TMapperConfig]: ReturnType<TMapperConfig[K]>;
 } & InternalScrollData;
 
+/**
+ * Creates reactive scroll data for element and optional scrolling container.
+ *
+ * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/scroll-data.html)
+ */
 export const createScrollData = <
   TElement extends HTMLElement,
   TMappedData extends ScrollDataMapperConfig,

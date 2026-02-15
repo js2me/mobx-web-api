@@ -1,3 +1,5 @@
+export * from './battery-status.js';
+export * from './connection-info.js';
 export * from './geolocation.js';
 export * from './media-query.js';
 export * from './network-status.js';
@@ -5,3 +7,5 @@ export * from './page-visibility.js';
 export * from './preferred-languages.js';
 export * from './screen-info.js';
 export * from './scroll-data.js';
+export * from './storage-data.js';
+export * from './viewport-info.js';

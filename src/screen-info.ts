@@ -71,6 +71,12 @@ const screenKeys = [
   'orientation',
 ] as const satisfies (keyof globalThis.Screen)[];
 
+/**
+ * Reactive screen information for MobX consumers.
+ *
+ * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/screen-info.html)
+ * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Screen)
+ */
 export const screenInfo: ScreenInfo = screenKeys.reduce((acc, screenKey) => {
   Object.defineProperty(acc, screenKey, {
     get() {

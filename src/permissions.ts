@@ -51,7 +51,7 @@ const getOrCreatePermissionAtom = (
       process.env.NODE_ENV === 'production' ? '' : `${name}_permission`,
       (atom) => {
         if (!atom.meta.permissionStatus) {
-          // biome-ignore lint/nursery/noFloatingPromises: <explanation>
+          // biome-ignore lint/nursery/noFloatingPromises: lazy permission query
           requestPermission(name, atom);
         }
       },

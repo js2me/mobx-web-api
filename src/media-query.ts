@@ -39,6 +39,12 @@ const matchMediaTrackerFactory = {
   },
 };
 
+/**
+ * Reactive media query info API.
+ *
+ * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/media-query.html)
+ * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Window/matchMedia)
+ */
 export interface MediaQueryInfo {
   /**
    * Object which contains all posible document sizes.
@@ -118,6 +124,12 @@ export interface MediaQueryInfo {
   _atom?: IEnhancedAtom;
 }
 
+/**
+ * Reactive media query API for MobX consumers.
+ *
+ * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/media-query.html)
+ * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Window/matchMedia)
+ */
 export const mediaQuery = makeObservable<MediaQueryInfo>(
   {
     get sizes() {
