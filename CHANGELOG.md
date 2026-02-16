@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.11.1
+
+### Patch Changes
+
+- [`c019f7a`](https://github.com/js2me/mobx-web-api/commit/c019f7ad14b0d567dc639099328972857d84aebe) Thanks [@js2me](https://github.com/js2me)! - mixing export colorScheme
+
 ## 1.11.0
 
 ### Minor Changes
