@@ -1,4 +1,5 @@
 export * from './battery-status.js';
+export * from './color-scheme.js';
 export * from './connection-info.js';
 export * from './geolocation.js';
 export * from './media-query.js';
