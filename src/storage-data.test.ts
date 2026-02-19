@@ -95,6 +95,46 @@ describe('storageData', () => {
     dispose();
   });
 
+  it('updates reactions when deleting dashed key', () => {
+    const storageData = createStorageData();
+    const valueSpy = vi.fn();
+
+    const dispose = reaction(
+      () => storageData.local['auth-token'],
+      (value) => valueSpy(value),
+    );
+
+    storageData.local['auth-token'] = 'token-value';
+    delete storageData.local['auth-token'];
+
+    expect(valueSpy).toHaveBeenCalledTimes(2);
+    expect(valueSpy).toHaveBeenNthCalledWith(1, 'token-value');
+    expect(valueSpy).toHaveBeenNthCalledWith(2, null);
+    expect(globalThis.localStorage.getItem('auth-token')).toBeNull();
+
+    dispose();
+  });
+
+  it('updates session reactions when deleting dashed key', () => {
+    const storageData = createStorageData();
+    const valueSpy = vi.fn();
+
+    const dispose = reaction(
+      () => storageData.session['auth-token'],
+      (value) => valueSpy(value),
+    );
+
+    storageData.session['auth-token'] = 'token-value';
+    delete storageData.session['auth-token'];
+
+    expect(valueSpy).toHaveBeenCalledTimes(2);
+    expect(valueSpy).toHaveBeenNthCalledWith(1, 'token-value');
+    expect(valueSpy).toHaveBeenNthCalledWith(2, null);
+    expect(globalThis.sessionStorage.getItem('auth-token')).toBeNull();
+
+    dispose();
+  });
+
   it('handles storage event updates from external changes', () => {
     const storageData = createStorageData({ prefix: 'app:' });
     const valueSpy = vi.fn();
