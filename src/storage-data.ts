@@ -1,23 +1,15 @@
+import { safeJsonParse } from 'yummies/data';
 import { createEnhancedAtom, type IEnhancedAtom } from 'yummies/mobx';
 import type { Dict } from 'yummies/types';
 
 /**
- * Reactive storage scope where keys map to string values from Web Storage.
+ * Reactive storage values where keys map to string values from Web Storage.
  *
  * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Storage)
  */
-export type StorageScope = Dict<string | null>;
+export type StorageValues = Dict<string | null>;
 
-export type StorageKind = 'local' | 'session';
-
-/**
- * Reactive API for both local and session storage scopes.
- *
- * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/storage-data.html)
- * [MDN localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
- * [MDN sessionStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage)
- */
-export type StorageData = Dict<StorageScope, StorageKind>;
+export type StorageScope = 'local' | 'session';
 
 export interface CreateStorageDataOptions {
   /**
@@ -27,13 +19,41 @@ export interface CreateStorageDataOptions {
   prefix?: string;
 }
 
-const getStorage = (kind: StorageKind): Storage | undefined => {
+export interface StorageDataKey<TValue = string | null> {
+  /**
+   * Reactive value for one storage key.
+   */
+  get value(): TValue;
+  set value(value: TValue);
+}
+
+/**
+ * Reactive API for both local and session storage scopes.
+ *
+ * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/storage-data.html)
+ * [MDN localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
+ * [MDN sessionStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage)
+ */
+export interface StorageData extends Dict<StorageValues, StorageScope> {
+  /**
+   * Typed helper for one key in local/session storage.
+   *
+   * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/storage-data.html)
+   */
+  key<TValue>(
+    key: string,
+    defaultValue: TValue,
+    scope?: StorageScope,
+  ): StorageDataKey<TValue>;
+}
+
+const getStorage = (scope: StorageScope): Storage | undefined => {
   try {
     if (!globalThis.window) {
       return undefined;
     }
 
-    return kind === 'local'
+    return scope === 'local'
       ? globalThis.localStorage
       : globalThis.sessionStorage;
   } catch {
@@ -42,9 +62,9 @@ const getStorage = (kind: StorageKind): Storage | undefined => {
 };
 
 const createStorageScope = (
-  kind: StorageKind,
+  scope: StorageScope,
   options?: CreateStorageDataOptions,
-): StorageScope => {
+): StorageValues => {
   const prefix = options?.prefix ?? '';
   const atoms = new Map<string, IEnhancedAtom>();
 
@@ -57,12 +77,12 @@ const createStorageScope = (
       const atom = createEnhancedAtom<{ dispose?: VoidFunction }>(
         process.env.NODE_ENV === 'production'
           ? ''
-          : `storageData:${kind}:${storageKey}`,
+          : `storageData:${scope}:${storageKey}`,
         (atom) => {
           const storageListener = (event: StorageEvent) => {
             if (
               event.key === storageKey &&
-              event.storageArea === getStorage(kind)
+              event.storageArea === getStorage(scope)
             ) {
               atom.reportChanged();
             }
@@ -94,12 +114,12 @@ const createStorageScope = (
         const atom = getAtom(property);
         atom.reportObserved();
 
-        return getStorage(kind)?.getItem(toStorageKey(property)) ?? null;
+        return getStorage(scope)?.getItem(toStorageKey(property)) ?? null;
       },
       set(_, rawProperty, value) {
         const property = String(rawProperty);
         const atom = getAtom(property);
-        const storage = getStorage(kind);
+        const storage = getStorage(scope);
         const storageKey = toStorageKey(property);
 
         if (value == null) {
@@ -114,12 +134,12 @@ const createStorageScope = (
       deleteProperty(_, rawProperty) {
         const property = String(rawProperty);
         const atom = getAtom(property);
-        getStorage(kind)?.removeItem(toStorageKey(property));
+        getStorage(scope)?.removeItem(toStorageKey(property));
         atom.reportChanged();
         return true;
       },
     },
-  ) as StorageScope;
+  ) as StorageValues;
 };
 
 /**
@@ -132,10 +152,9 @@ const createStorageScope = (
 export const createStorageData = (
   options?: CreateStorageDataOptions,
 ): StorageData => {
-  let localScope: StorageScope | undefined;
-  let sessionScope: StorageScope | undefined;
-
-  return {
+  let localScope: StorageValues | undefined;
+  let sessionScope: StorageValues | undefined;
+  const storageData: StorageData = {
     get local() {
       localScope ??= createStorageScope('local', options);
       return localScope;
@@ -144,7 +163,43 @@ export const createStorageData = (
       sessionScope ??= createStorageScope('session', options);
       return sessionScope;
     },
+    key<TValue>(
+      key: string,
+      defaultValue: TValue,
+      scope: StorageScope = 'local',
+    ) {
+      const storageDataKey = {} as { value: TValue };
+      const isString = typeof defaultValue === 'string';
+
+      Object.defineProperty(storageDataKey, 'value', {
+        get: () => {
+          if (isString) {
+            return storageData[scope][key] == null
+              ? defaultValue
+              : storageData[scope][key];
+          }
+
+          return safeJsonParse(storageData[scope][key], defaultValue);
+        },
+        set: (value: TValue) => {
+          if (value == null) {
+            delete storageData[scope][key];
+            return;
+          }
+
+          storageData[scope][key] = isString
+            ? String(value)
+            : JSON.stringify(value);
+        },
+        enumerable: true,
+        configurable: true,
+      });
+
+      return storageDataKey as StorageDataKey<TValue>;
+    },
   };
+
+  return storageData;
 };
 
 /**

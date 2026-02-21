@@ -1,5 +1,13 @@
 import { reaction } from 'mobx';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  it,
+  vi,
+} from 'vitest';
 import { createStorageData } from './storage-data.js';
 
 describe('storageData', () => {
@@ -263,5 +271,69 @@ describe('storageData', () => {
       'storage',
       expect.any(Function),
     );
+  });
+
+  it('creates typed key accessor with local scope', () => {
+    const storageData = createStorageData();
+    const numbersKey = storageData.key<number[]>('numbers', []);
+
+    numbersKey.value = [1, 2, 3, 4];
+
+    expect(globalThis.localStorage.getItem('numbers')).toBe('[1,2,3,4]');
+    expect(numbersKey.value).toEqual([1, 2, 3, 4]);
+  });
+
+  it('stores and reads string key as raw string', () => {
+    const storageData = createStorageData();
+    const tokenKey = storageData.key<string>('auth-token', '');
+
+    tokenKey.value = 'plain-token';
+    expect(globalThis.localStorage.getItem('auth-token')).toBe('plain-token');
+    expect(tokenKey.value).toBe('plain-token');
+
+    globalThis.localStorage.setItem('auth-token', 'legacy-raw-token');
+    expect(tokenKey.value).toBe('legacy-raw-token');
+  });
+
+  it('parses JSON value when possible for non-string defaults', () => {
+    const storageData = createStorageData();
+    const settingsKey = storageData.key<{ theme: string }>('settings', {
+      theme: 'light',
+    });
+
+    globalThis.localStorage.setItem('settings', '{"theme":"dark"}');
+    expect(settingsKey.value).toEqual({ theme: 'dark' });
+  });
+
+  it('updates reactions for typed key and supports delete via null', () => {
+    const storageData = createStorageData();
+    const valueSpy = vi.fn();
+
+    const authTokenKey = storageData.key<string | null>('auth-token', null);
+
+    const dispose = reaction(
+      () => authTokenKey.value,
+      (value) => valueSpy(value),
+    );
+
+    authTokenKey.value = 'token-1';
+    authTokenKey.value = null;
+
+    expect(valueSpy).toHaveBeenCalledTimes(2);
+    expect(valueSpy).toHaveBeenNthCalledWith(1, 'token-1');
+    expect(valueSpy).toHaveBeenNthCalledWith(2, null);
+    expect(globalThis.localStorage.getItem('auth-token')).toBeNull();
+
+    dispose();
+  });
+
+  it('infers getter and setter types for storageData.key', () => {
+    const storageData = createStorageData();
+    const key = storageData.key<number[]>('typed-array', []);
+
+    key.value = [1, 2, 3];
+    expect(globalThis.localStorage.getItem('typed-array')).toBe('[1,2,3]');
+    expect(key.value).toEqual([1, 2, 3]);
+    expectTypeOf(key.value).toEqualTypeOf<number[]>();
   });
 });

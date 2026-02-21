@@ -34,6 +34,37 @@ storageData.session["draft"] = "step-1";
 console.log(storageData.session["draft"]); // "step-1"
 ```
 
+Typed key helper example:
+
+```ts
+const tokenKey = storageData.key<string | null>("auth-token", null);
+
+tokenKey.value = "new-token";
+console.log(tokenKey.value); // "new-token"
+
+tokenKey.value = null; // removes key from storage
+```
+
+Array/object helper examples:
+
+```ts
+const cartKey = storageData.key<number[]>("cart-items", []);
+cartKey.value = [1, 2, 3];
+console.log(cartKey.value); // [1, 2, 3]
+
+const profileKey = storageData.key<{ name: string } | null>("profile", null);
+profileKey.value = { name: "John" };
+console.log(profileKey.value); // { name: "John" }
+```
+
+Session helper example:
+
+```ts
+const draftKey = storageData.key<string>("draft", "", "session");
+draftKey.value = "step-2";
+console.log(draftKey.value); // "step-2"
+```
+
 Prefix example:
 
 ```ts
@@ -66,6 +97,21 @@ Creates isolated storage API with lazy `local`/`session` scopes.
 - `prefix?: string` - prefix for real storage keys (`${prefix}${key}`).
 
 [MDN Storage interface](https://developer.mozilla.org/en-US/docs/Web/API/Storage)
+
+#### `storageData.key(key, defaultValue, scope?)`
+
+Creates a typed reactive accessor for a single key.
+
+- `key: string` - storage key.
+- `defaultValue: TValue` - value returned when key does not exist or cannot be parsed.
+- `scope?: "local" | "session"` - storage scope (`"local"` by default).
+
+Behavior:
+
+- string defaults are stored as plain strings;
+- non-string defaults are stored as JSON (`JSON.stringify`);
+- on read, non-string defaults use safe JSON parse with fallback to `defaultValue`;
+- assigning `null` or `undefined` removes key.
 
 #### Write / remove
 
