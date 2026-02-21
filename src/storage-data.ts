@@ -1,4 +1,4 @@
-import { safeJsonParse } from 'yummies/data';
+import { isUnsafeProperty, safeJsonParse } from 'yummies/data';
 import { createEnhancedAtom, type IEnhancedAtom } from 'yummies/mobx';
 import type { Dict } from 'yummies/types';
 
@@ -102,50 +102,47 @@ const createStorageValues = (
     return atoms.get(key)!;
   };
 
-  return new Proxy(
-    {},
-    {
-      get(_, key) {
-        if (typeof key !== 'string') {
-          return undefined;
-        }
+  return new Proxy(Object.create(null), {
+    get(_, key) {
+      if (typeof key !== 'string' || isUnsafeProperty(key)) {
+        return undefined;
+      }
 
-        getAtom(key).reportObserved();
-        const storageKey = toStorageKey(key, options?.prefix);
+      getAtom(key).reportObserved();
+      const storageKey = toStorageKey(key, options?.prefix);
 
-        return getStorage(scope)?.getItem(storageKey) ?? null;
-      },
-      set(_, rawKey, value) {
-        if (typeof rawKey !== 'string') {
-          return true;
-        }
-
-        const key = String(rawKey);
-        const storage = getStorage(scope);
-        const storageKey = toStorageKey(key, options?.prefix);
-
-        if (value == null) {
-          storage?.removeItem(storageKey);
-        } else {
-          storage?.setItem(storageKey, String(value));
-        }
-
-        getAtom(key).reportChanged();
-        return true;
-      },
-      deleteProperty(_, rawKey) {
-        if (typeof rawKey !== 'string') {
-          return true;
-        }
-
-        const key = String(rawKey);
-        const storageKey = toStorageKey(key, options?.prefix);
-        getStorage(scope)?.removeItem(storageKey);
-        getAtom(key).reportChanged();
-        return true;
-      },
+      return getStorage(scope)?.getItem(storageKey) ?? null;
     },
-  ) as StorageValues;
+    set(_, rawKey, value) {
+      if (typeof rawKey !== 'string' || isUnsafeProperty(rawKey)) {
+        return true;
+      }
+
+      const key = String(rawKey);
+      const storage = getStorage(scope);
+      const storageKey = toStorageKey(key, options?.prefix);
+
+      if (value == null) {
+        storage?.removeItem(storageKey);
+      } else {
+        storage?.setItem(storageKey, String(value));
+      }
+
+      getAtom(key).reportChanged();
+      return true;
+    },
+    deleteProperty(_, rawKey) {
+      if (typeof rawKey !== 'string' || isUnsafeProperty(rawKey)) {
+        return true;
+      }
+
+      const key = String(rawKey);
+      const storageKey = toStorageKey(key, options?.prefix);
+      getStorage(scope)?.removeItem(storageKey);
+      getAtom(key).reportChanged();
+      return true;
+    },
+  }) as StorageValues;
 };
 
 /**

@@ -340,6 +340,35 @@ describe('storageData', () => {
     expect(globalThis.localStorage.getItem('Symbol(test)')).toBeNull();
   });
 
+  it('ignores unsafe property keys in storage proxies', () => {
+    const storageData = createStorageData();
+    const localProxy = storageData.local as Record<string, unknown>;
+    const unsafeKeys = ['__proto__', 'prototype', 'constructor'] as const;
+
+    for (const key of unsafeKeys) {
+      localProxy[key] = 'blocked-value';
+      expect(localProxy[key]).toBeUndefined();
+      expect(globalThis.localStorage.getItem(key)).toBeNull();
+
+      delete localProxy[key];
+      expect(globalThis.localStorage.getItem(key)).toBeNull();
+    }
+  });
+
+  it('keeps typed key helper safe for unsafe keys', () => {
+    const storageData = createStorageData();
+    const unsafeKeys = ['__proto__', 'prototype', 'constructor'] as const;
+
+    for (const key of unsafeKeys) {
+      const typedKey = storageData.key<string>(key, 'fallback');
+      expect(typedKey.value).toBe('fallback');
+
+      typedKey.value = 'blocked-value';
+      expect(typedKey.value).toBe('fallback');
+      expect(globalThis.localStorage.getItem(key)).toBeNull();
+    }
+  });
+
   it('throws for non-serializable values in key helper', () => {
     const storageData = createStorageData();
     const objectKey = storageData.key<Record<string, unknown>>('object', {});
