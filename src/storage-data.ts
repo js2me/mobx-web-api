@@ -61,18 +61,17 @@ const getStorage = (scope: StorageScope): Storage | undefined => {
   }
 };
 
+const toStorageKey = (key: string, prefix = '') => `${prefix}${key}`;
+
 const createStorageScope = (
   scope: StorageScope,
   options?: CreateStorageDataOptions,
 ): StorageValues => {
-  const prefix = options?.prefix ?? '';
   const atoms = new Map<string, IEnhancedAtom>();
-
-  const toStorageKey = (key: string) => `${prefix}${key}`;
 
   const getAtom = (key: string) => {
     if (!atoms.has(key)) {
-      const storageKey = toStorageKey(key);
+      const storageKey = toStorageKey(key, options?.prefix);
 
       const atom = createEnhancedAtom<{ dispose?: VoidFunction }>(
         process.env.NODE_ENV === 'production'
@@ -106,21 +105,24 @@ const createStorageScope = (
   return new Proxy(
     {},
     {
-      get(_, property) {
-        if (typeof property !== 'string') {
+      get(_, key) {
+        if (typeof key !== 'string') {
           return undefined;
         }
 
-        const atom = getAtom(property);
-        atom.reportObserved();
+        getAtom(key).reportObserved();
+        const storageKey = toStorageKey(key, options?.prefix);
 
-        return getStorage(scope)?.getItem(toStorageKey(property)) ?? null;
+        return getStorage(scope)?.getItem(storageKey) ?? null;
       },
-      set(_, rawProperty, value) {
-        const property = String(rawProperty);
-        const atom = getAtom(property);
+      set(_, rawKey, value) {
+        if (typeof rawKey !== 'string') {
+          return true;
+        }
+
+        const key = String(rawKey);
         const storage = getStorage(scope);
-        const storageKey = toStorageKey(property);
+        const storageKey = toStorageKey(key, options?.prefix);
 
         if (value == null) {
           storage?.removeItem(storageKey);
@@ -128,14 +130,18 @@ const createStorageScope = (
           storage?.setItem(storageKey, String(value));
         }
 
-        atom.reportChanged();
+        getAtom(key).reportChanged();
         return true;
       },
-      deleteProperty(_, rawProperty) {
-        const property = String(rawProperty);
-        const atom = getAtom(property);
-        getStorage(scope)?.removeItem(toStorageKey(property));
-        atom.reportChanged();
+      deleteProperty(_, rawKey) {
+        if (typeof rawKey !== 'string') {
+          return true;
+        }
+
+        const key = String(rawKey);
+        const storageKey = toStorageKey(key, options?.prefix);
+        getStorage(scope)?.removeItem(storageKey);
+        getAtom(key).reportChanged();
         return true;
       },
     },

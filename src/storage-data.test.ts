@@ -327,6 +327,32 @@ describe('storageData', () => {
     dispose();
   });
 
+  it('ignores symbol keys in set and delete traps', () => {
+    const storageData = createStorageData();
+    const symbolKey = Symbol('test');
+    const localProxy = storageData.local as Record<PropertyKey, unknown>;
+
+    localProxy[symbolKey] = 'value';
+    expect(localProxy[symbolKey]).toBeUndefined();
+    expect(globalThis.localStorage.getItem('Symbol(test)')).toBeNull();
+
+    delete localProxy[symbolKey];
+    expect(globalThis.localStorage.getItem('Symbol(test)')).toBeNull();
+  });
+
+  it('throws for non-serializable values in key helper', () => {
+    const storageData = createStorageData();
+    const objectKey = storageData.key<Record<string, unknown>>('object', {});
+    const circular: Record<string, unknown> = {};
+
+    circular.self = circular;
+
+    expect(() => {
+      objectKey.value = circular;
+    }).toThrow();
+    expect(globalThis.localStorage.getItem('object')).toBeNull();
+  });
+
   it('infers getter and setter types for storageData.key', () => {
     const storageData = createStorageData();
     const key = storageData.key<number[]>('typed-array', []);
