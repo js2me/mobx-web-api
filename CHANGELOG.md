@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.12.0
+
+### Minor Changes
+
+- [`aae87bb`](https://github.com/js2me/mobx-web-api/commit/aae87bb471e95d4946773eba871419978d4b7fa5) Thanks [@js2me](https://github.com/js2me)! - added `key()` property for `storageData` to use predefined config
+
 ## 1.11.1
 
 ### Patch Changes
