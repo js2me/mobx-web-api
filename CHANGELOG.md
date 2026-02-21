@@ -1,5 +1,13 @@
 # mobx-web-api
 
+## 1.12.1
+
+### Patch Changes
+
+- [`a823cc6`](https://github.com/js2me/mobx-web-api/commit/a823cc6b7b7c417181693e53f8f4c1e4bad2e95b) Thanks [@js2me](https://github.com/js2me)! - fixed vulnerability - security/code-scanning/1
+
+- [`86a34e0`](https://github.com/js2me/mobx-web-api/commit/86a34e0ddaeb7243258155d5a2374bd66ac3b675) Thanks [@js2me](https://github.com/js2me)! - fixed symbol keys in storageData
+
 ## 1.12.0
 
 ### Minor Changes
