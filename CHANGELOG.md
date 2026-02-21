@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.12.2
+
+### Patch Changes
+
+- [`1408501`](https://github.com/js2me/mobx-web-api/commit/1408501bcf0945811422f2e3f657b60d8df4951e) Thanks [@js2me](https://github.com/js2me)! - fixed vulnerability with unsafe properties
+
 ## 1.12.1
 
 ### Patch Changes
