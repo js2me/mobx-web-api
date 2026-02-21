@@ -63,7 +63,7 @@ const getStorage = (scope: StorageScope): Storage | undefined => {
 
 const toStorageKey = (key: string, prefix = '') => `${prefix}${key}`;
 
-const createStorageScope = (
+const createStorageValues = (
   scope: StorageScope,
   options?: CreateStorageDataOptions,
 ): StorageValues => {
@@ -158,16 +158,22 @@ const createStorageScope = (
 export const createStorageData = (
   options?: CreateStorageDataOptions,
 ): StorageData => {
-  let localScope: StorageValues | undefined;
-  let sessionScope: StorageValues | undefined;
+  const storages: Partial<Record<StorageScope, StorageValues>> = {};
+
+  const getStorageValues = (scope: StorageScope) => {
+    storages[scope] ??= createStorageValues(
+      scope === 'local' ? 'local' : 'session',
+      options,
+    );
+    return storages[scope];
+  };
+
   const storageData: StorageData = {
     get local() {
-      localScope ??= createStorageScope('local', options);
-      return localScope;
+      return getStorageValues('local');
     },
     get session() {
-      sessionScope ??= createStorageScope('session', options);
-      return sessionScope;
+      return getStorageValues('session');
     },
     key<TValue>(
       key: string,
@@ -176,26 +182,23 @@ export const createStorageData = (
     ) {
       const storageDataKey = {} as { value: TValue };
       const isString = typeof defaultValue === 'string';
+      const values = getStorageValues(scope);
 
       Object.defineProperty(storageDataKey, 'value', {
         get: () => {
           if (isString) {
-            return storageData[scope][key] == null
-              ? defaultValue
-              : storageData[scope][key];
+            return values[key] == null ? defaultValue : values[key];
           }
 
-          return safeJsonParse(storageData[scope][key], defaultValue);
+          return safeJsonParse(values[key], defaultValue);
         },
         set: (value: TValue) => {
           if (value == null) {
-            delete storageData[scope][key];
+            delete values[key];
             return;
           }
 
-          storageData[scope][key] = isString
-            ? String(value)
-            : JSON.stringify(value);
+          values[key] = isString ? String(value) : JSON.stringify(value);
         },
         enumerable: true,
         configurable: true,
