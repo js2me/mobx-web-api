@@ -1,6 +1,6 @@
 {
   "name": "mobx-web-api",
-  "version": "1.12.2",
+  "version": "1.13.0",
   "scripts": {
     "prepare": "pnpm dev:install-hooks",
     "clean": "rimraf dist",

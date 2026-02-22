@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.13.0
+
+### Minor Changes
+
+- [`b916ca9`](https://github.com/js2me/mobx-web-api/commit/b916ca996fc5f7fe4b75f79883b04972dbe60197) Thanks [@js2me](https://github.com/js2me)! - deleting properties in storage keys
+
 ## 1.12.2
 
 ### Patch Changes
