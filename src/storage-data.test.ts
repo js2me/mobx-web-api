@@ -327,6 +327,38 @@ describe('storageData', () => {
     dispose();
   });
 
+  it('supports delete operator for typed key helper', () => {
+    const storageData = createStorageData();
+    const authTokenKey = storageData.key<string>('auth-token', '');
+
+    authTokenKey.value = 'token-1';
+    expect(globalThis.localStorage.getItem('auth-token')).toBe('token-1');
+
+    authTokenKey.value = null;
+    expect(globalThis.localStorage.getItem('auth-token')).toBeNull();
+
+    authTokenKey.value = 'token-2';
+    expect(globalThis.localStorage.getItem('auth-token')).toBe('token-2');
+
+    // @ts-expect-error - delete operator is not supported for typed key helper
+    delete authTokenKey.value;
+
+    expect(globalThis.localStorage.getItem('auth-token')).toBeNull();
+    expect(authTokenKey.value).toBe('');
+  });
+
+  it('supports reset method for typed key helper', () => {
+    const storageData = createStorageData();
+    const authTokenKey = storageData.key<string>('auth-token', '');
+
+    authTokenKey.value = 'token-1';
+    expect(globalThis.localStorage.getItem('auth-token')).toBe('token-1');
+
+    authTokenKey.reset();
+    expect(globalThis.localStorage.getItem('auth-token')).toBeNull();
+    expect(authTokenKey.value).toBe('');
+  });
+
   it('ignores symbol keys in set and delete traps', () => {
     const storageData = createStorageData();
     const symbolKey = Symbol('test');

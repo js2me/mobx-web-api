@@ -24,7 +24,16 @@ export interface StorageDataKey<TValue = string | null> {
    * Reactive value for one storage key.
    */
   get value(): TValue;
-  set value(value: TValue);
+  /**
+   * Updates reactive value for one storage key.
+   * Assign `null` to remove the key from storage.
+   */
+  set value(value: TValue | null);
+  /**
+   * Clears the storage key.
+   * Works the same as `value = null`.
+   */
+  reset(): void;
 }
 
 /**
@@ -177,31 +186,46 @@ export const createStorageData = (
       defaultValue: TValue,
       scope: StorageScope = 'local',
     ) {
-      const storageDataKey = {} as { value: TValue };
       const isString = typeof defaultValue === 'string';
       const values = getStorageValues(scope);
+      const reset = () => {
+        delete values[key];
+      };
 
-      Object.defineProperty(storageDataKey, 'value', {
-        get: () => {
-          if (isString) {
-            return values[key] == null ? defaultValue : values[key];
+      return new Proxy(Object.create(null), {
+        get(_, property) {
+          if (property === 'reset') {
+            return reset;
+          }
+          if (property === 'value') {
+            if (isString) {
+              return values[key] == null ? defaultValue : values[key];
+            }
+
+            return safeJsonParse(values[key], defaultValue);
           }
 
-          return safeJsonParse(values[key], defaultValue);
+          return undefined;
         },
-        set: (value: TValue) => {
-          if (value == null) {
-            delete values[key];
-            return;
+        set(_, property, value: TValue) {
+          if (property === 'value') {
+            if (value == null) {
+              reset();
+            } else {
+              values[key] = isString ? String(value) : JSON.stringify(value);
+            }
           }
 
-          values[key] = isString ? String(value) : JSON.stringify(value);
+          return true;
         },
-        enumerable: true,
-        configurable: true,
-      });
+        deleteProperty(_, property) {
+          if (property === 'value') {
+            reset();
+          }
 
-      return storageDataKey as StorageDataKey<TValue>;
+          return true;
+        },
+      }) as StorageDataKey<TValue>;
     },
   };
 

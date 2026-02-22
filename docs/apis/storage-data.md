@@ -43,6 +43,7 @@ tokenKey.value = "new-token";
 console.log(tokenKey.value); // "new-token"
 
 tokenKey.value = null; // removes key from storage
+tokenKey.reset(); // also removes key from storage
 ```
 
 Array/object helper examples:
@@ -111,7 +112,9 @@ Behavior:
 - string defaults are stored as plain strings;
 - non-string defaults are stored as JSON (`JSON.stringify`);
 - on read, non-string defaults use safe JSON parse with fallback to `defaultValue`;
-- assigning `null` or `undefined` removes key.
+- assigning `null` or `undefined` removes key;
+- for typed accessors, `myKey.value = null` clears the storage key;
+- `myKey.reset()` clears the storage key the same way as `myKey.value = null`.
 
 #### Write / remove
 
