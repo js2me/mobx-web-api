@@ -41,6 +41,60 @@ describe('storageData', () => {
     expect(globalThis.sessionStorage.getItem('draft')).toBe('v1');
   });
 
+  it('supports Object.assign for local storage scope', () => {
+    const storageData = createStorageData();
+
+    Object.assign(storageData.local, {
+      token: 'abc',
+      theme: 'dark',
+    });
+
+    expect(storageData.local.token).toBe('abc');
+    expect(storageData.local.theme).toBe('dark');
+    expect(globalThis.localStorage.getItem('token')).toBe('abc');
+    expect(globalThis.localStorage.getItem('theme')).toBe('dark');
+  });
+
+  it('supports Object.assign for session storage scope', () => {
+    const storageData = createStorageData();
+
+    Object.assign(storageData.session, {
+      draft: 'v2',
+      step: '3',
+    });
+
+    expect(storageData.session.draft).toBe('v2');
+    expect(storageData.session.step).toBe('3');
+    expect(globalThis.sessionStorage.getItem('draft')).toBe('v2');
+    expect(globalThis.sessionStorage.getItem('step')).toBe('3');
+  });
+
+  it('supports delete operator for local storage scope', () => {
+    const storageData = createStorageData();
+
+    storageData.local.foo = 'bar';
+    expect(storageData.local.foo).toBe('bar');
+    expect(globalThis.localStorage.getItem('foo')).toBe('bar');
+
+    delete storageData.local.foo;
+
+    expect(storageData.local.foo).toBeNull();
+    expect(globalThis.localStorage.getItem('foo')).toBeNull();
+  });
+
+  it('supports delete operator for session storage scope', () => {
+    const storageData = createStorageData();
+
+    storageData.session.foo = 'bar';
+    expect(storageData.session.foo).toBe('bar');
+    expect(globalThis.sessionStorage.getItem('foo')).toBe('bar');
+
+    delete storageData.session.foo;
+
+    expect(storageData.session.foo).toBeNull();
+    expect(globalThis.sessionStorage.getItem('foo')).toBeNull();
+  });
+
   it('removes key on delete and nullish assignment', () => {
     const storageData = createStorageData();
 
