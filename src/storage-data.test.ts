@@ -477,4 +477,55 @@ describe('storageData', () => {
     expect(key.value).toEqual([1, 2, 3]);
     expectTypeOf(key.value).toEqualTypeOf<number[]>();
   });
+
+  it('updates local typed key when mutating array in place', () => {
+    const storageData = createStorageData();
+    const stored = storageData.key<number[]>('numbers', [], 'local');
+
+    stored.value.push(1);
+
+    expect(stored.value).toEqual([1]);
+    expect(globalThis.localStorage.getItem('numbers')).toBe('[1]');
+  });
+
+  it('updates local typed key after pop mutation', () => {
+    const storageData = createStorageData();
+    const stored = storageData.key<number[]>('numbers', [1, 2, 3], 'local');
+
+    stored.value.pop();
+
+    expect(stored.value).toEqual([1, 2]);
+    expect(globalThis.localStorage.getItem('numbers')).toBe('[1,2]');
+  });
+
+  it('updates local typed key after unshift and shift mutations', () => {
+    const storageData = createStorageData();
+    const stored = storageData.key<number[]>('numbers', [2, 3], 'local');
+
+    stored.value.unshift(1);
+    stored.value.shift();
+
+    expect(stored.value).toEqual([2, 3]);
+    expect(globalThis.localStorage.getItem('numbers')).toBe('[2,3]');
+  });
+
+  it('updates local typed key after splice mutation', () => {
+    const storageData = createStorageData();
+    const stored = storageData.key<number[]>('numbers', [1, 2, 3, 4], 'local');
+
+    stored.value.splice(1, 2, 8, 9);
+
+    expect(stored.value).toEqual([1, 8, 9, 4]);
+    expect(globalThis.localStorage.getItem('numbers')).toBe('[1,8,9,4]');
+  });
+
+  it('updates local typed key after reverse mutation', () => {
+    const storageData = createStorageData();
+    const stored = storageData.key<number[]>('numbers', [1, 2, 3], 'local');
+
+    stored.value.reverse();
+
+    expect(stored.value).toEqual([3, 2, 1]);
+    expect(globalThis.localStorage.getItem('numbers')).toBe('[3,2,1]');
+  });
 });
