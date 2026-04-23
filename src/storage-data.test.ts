@@ -528,4 +528,38 @@ describe('storageData', () => {
     expect(stored.value).toEqual([3, 2, 1]);
     expect(globalThis.localStorage.getItem('numbers')).toBe('[3,2,1]');
   });
+
+  it('updates local typed key after Date mutating methods', () => {
+    const storageData = createStorageData();
+    const stored = storageData.key<Date>(
+      'date-value',
+      new Date('2020-01-01T00:00:00.000Z'),
+      'local',
+    );
+
+    stored.value.setUTCFullYear(2025);
+    stored.value.setUTCMonth(3);
+
+    expect(stored.value.toISOString()).toBe('2025-04-01T00:00:00.000Z');
+    expect(globalThis.localStorage.getItem('date-value')).toBe(
+      '"2025-04-01T00:00:00.000Z"',
+    );
+  });
+
+  it('updates local typed key after Uint8Array mutating methods', () => {
+    const storageData = createStorageData();
+    const stored = storageData.key<Uint8Array>(
+      'typed-array-bytes',
+      new Uint8Array([1, 2, 3]),
+      'local',
+    );
+
+    stored.value.set([9, 8], 0);
+    stored.value.reverse();
+
+    expect(Array.from(stored.value)).toEqual([3, 8, 9]);
+    expect(globalThis.localStorage.getItem('typed-array-bytes')).toBe(
+      '{"0":3,"1":8,"2":9}',
+    );
+  });
 });
