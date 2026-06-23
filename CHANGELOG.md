@@ -1,5 +1,15 @@
 # mobx-web-api
 
+## 1.14.0
+
+### Minor Changes
+
+- [`5b74092`](https://github.com/js2me/mobx-web-api/commit/5b740929b05d83f7d1cab0aee3a5c97b949cb2aa) Thanks [@js2me](https://github.com/js2me)! - add mutation tracks for methods in `storageData.key()`
+
+### Patch Changes
+
+- [`9ff067c`](https://github.com/js2me/mobx-web-api/commit/9ff067cfe08668a5a9f7d2cd7ba07b0c73f5f67d) Thanks [@js2me](https://github.com/js2me)! - migration npm publish to trusted gh actions
+
 ## 1.13.0
 
 ### Minor Changes
