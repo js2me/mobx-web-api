@@ -72,161 +72,6 @@ const getStorage = (scope: StorageScope): Storage | undefined => {
 
 const toStorageKey = (key: string, prefix = '') => `${prefix}${key}`;
 
-const createMutationTrackedValue = <TValue>(
-  value: TValue,
-  onMutate: (nextValue: TValue, serialized?: string) => void,
-): TValue => {
-  if (
-    value == null ||
-    (typeof value !== 'object' && typeof value !== 'function')
-  ) {
-    return value;
-  }
-
-  const rawToProxy = new WeakMap<object, object>();
-  const proxyToRaw = new WeakMap<object, object>();
-  let callDepth = 0;
-  let hasPendingMutation = false;
-  let mutationVersion = 0;
-  let lastSerialized = JSON.stringify(value);
-
-  const unwrap = <T>(target: T): T => {
-    if (
-      target == null ||
-      (typeof target !== 'object' && typeof target !== 'function')
-    ) {
-      return target;
-    }
-
-    return (proxyToRaw.get(target) as T | undefined) ?? target;
-  };
-
-  const commitIfChanged = () => {
-    const serialized = JSON.stringify(value);
-
-    if (serialized !== lastSerialized) {
-      lastSerialized = serialized;
-      mutationVersion += 1;
-      onMutate(value, serialized);
-    }
-  };
-
-  const scheduleCommit = () => {
-    if (callDepth > 0) {
-      hasPendingMutation = true;
-      return;
-    }
-
-    commitIfChanged();
-  };
-
-  const wrap = <T>(target: T): T => {
-    if (
-      target == null ||
-      (typeof target !== 'object' && typeof target !== 'function')
-    ) {
-      return target;
-    }
-
-    const rawTarget = unwrap(target);
-    const cached = rawToProxy.get(rawTarget);
-
-    if (cached) {
-      return cached as T;
-    }
-
-    const proxy = new Proxy(rawTarget, {
-      get(currentTarget, property, receiver) {
-        const currentValue = Reflect.get(currentTarget, property, receiver);
-
-        if (typeof currentValue === 'function') {
-          return (...args: unknown[]) => {
-            const previousVersion = mutationVersion;
-            callDepth += 1;
-
-            try {
-              let result: unknown;
-              const normalizedArgs = args.map((arg) => unwrap(arg));
-
-              try {
-                result = Reflect.apply(currentValue, receiver, normalizedArgs);
-              } catch {
-                // Some built-in methods require branded `this` and reject proxies
-                // (Date, TypedArray, etc.). Fallback to raw target and detect
-                // mutation via commitIfChanged below.
-                result = Reflect.apply(
-                  currentValue,
-                  currentTarget,
-                  normalizedArgs,
-                );
-              }
-
-              return wrap(result);
-            } finally {
-              callDepth -= 1;
-
-              if (callDepth === 0 && hasPendingMutation) {
-                hasPendingMutation = false;
-                commitIfChanged();
-              }
-
-              // Fallback for values that mutate internal slots
-              // without triggering proxy traps (e.g. Date#set*).
-              if (previousVersion === mutationVersion) {
-                commitIfChanged();
-              }
-            }
-          };
-        }
-
-        return wrap(currentValue);
-      },
-      set(currentTarget, property, nextValue) {
-        const updated = Reflect.set(
-          currentTarget,
-          property,
-          unwrap(nextValue),
-          currentTarget,
-        );
-
-        if (updated) {
-          scheduleCommit();
-        }
-
-        return updated;
-      },
-      deleteProperty(currentTarget, property) {
-        const updated = Reflect.deleteProperty(currentTarget, property);
-
-        if (updated) {
-          scheduleCommit();
-        }
-
-        return updated;
-      },
-      defineProperty(currentTarget, property, descriptor) {
-        const updated = Reflect.defineProperty(currentTarget, property, {
-          ...descriptor,
-          value: unwrap(descriptor.value),
-        });
-
-        if (updated) {
-          scheduleCommit();
-        }
-
-        return updated;
-      },
-    });
-
-    rawToProxy.set(rawTarget, proxy);
-    proxyToRaw.set(proxy, rawTarget);
-
-    return proxy as T;
-  };
-
-  return wrap(value);
-};
-
 const createStorageValues = (
   scope: StorageScope,
   options?: CreateStorageDataOptions,
@@ -343,12 +188,8 @@ export const createStorageData = (
     ) {
       const isString = typeof defaultValue === 'string';
       const values = getStorageValues(scope);
-      let cachedRawValue: string | null | undefined;
-      let cachedTrackedValue: TValue | undefined;
 
       const reset = () => {
-        cachedRawValue = null;
-        cachedTrackedValue = undefined;
         delete values[key];
       };
 
@@ -362,27 +203,7 @@ export const createStorageData = (
               return values[key] == null ? defaultValue : values[key];
             }
 
-            const rawValue = values[key];
-
-            if (
-              cachedTrackedValue !== undefined &&
-              rawValue === cachedRawValue
-            ) {
-              return cachedTrackedValue;
-            }
-
-            const parsedValue = safeJsonParse(rawValue, defaultValue);
-
-            cachedTrackedValue = createMutationTrackedValue(
-              parsedValue,
-              (nextValue, serialized) => {
-                values[key] = serialized ?? JSON.stringify(nextValue);
-                cachedRawValue = values[key];
-              },
-            );
-            cachedRawValue = rawValue;
-
-            return cachedTrackedValue;
+            return safeJsonParse(values[key], defaultValue);
           }
 
           return undefined;
@@ -393,13 +214,6 @@ export const createStorageData = (
               reset();
             } else {
               values[key] = isString ? String(value) : JSON.stringify(value);
-              cachedRawValue = values[key];
-              cachedTrackedValue = isString
-                ? undefined
-                : createMutationTrackedValue(value, (nextValue, serialized) => {
-                    values[key] = serialized ?? JSON.stringify(nextValue);
-                    cachedRawValue = values[key];
-                  });
             }
           }
 
