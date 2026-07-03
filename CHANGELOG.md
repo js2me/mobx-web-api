@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.14.1
+
+### Patch Changes
+
+- [`aad6a58`](https://github.com/js2me/mobx-web-api/commit/aad6a587c149ce5c7e8d69409207173623063664) Thanks [@js2me](https://github.com/js2me)! - revert add mutation tracks for methods in `storageData.key()`. Reason: solution is not ready.
+
 ## 1.14.0
 
 ### Minor Changes
