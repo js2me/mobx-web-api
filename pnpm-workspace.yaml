@@ -1,0 +1,10 @@
+packages:
+  - .
+
+allowBuilds:
+  '@swc/core': false
+  esbuild: false
+  lefthook: false
+
+minimumReleaseAgeExclude:
+  - docusite@0.1.8

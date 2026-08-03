@@ -11,19 +11,13 @@ reinstall: clean install
 
 .PHONY: doc
 doc:
-	cd docs && \
-	rm -rf node_modules && \
-	rm -rf .vitepress/cache && \
-	pnpm i && \
-	pnpm dev
+	rm -rf docs/.vitepress/cache
+	pnpm docs
 
 .PHONY: doc-build
 doc-build:
-	cd docs && \
-	rm -rf node_modules && \
-	rm -rf .vitepress/cache && \
-	pnpm i && \
-	pnpm build
+	rm -rf docs/.vitepress/cache
+	pnpm docs:build
 
 .PHONY: build
 build: reinstall

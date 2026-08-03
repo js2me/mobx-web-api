@@ -11,15 +11,15 @@ The `mobx-web-api` source code is written on TypeScript and compiled into NodeNe
 ::: code-group
 
 ```bash [npm]
-npm install {packageJson.name}
+npm install @{packageJson.name}
 ```
 
 ```bash [pnpm]
-pnpm add {packageJson.name}
+pnpm add @{packageJson.name}
 ```
 
 ```bash [yarn]
-yarn add {packageJson.name}
+yarn add @{packageJson.name}
 ```
 
 :::
