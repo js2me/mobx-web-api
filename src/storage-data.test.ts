@@ -9,7 +9,7 @@ import {
   vi,
 } from 'vitest';
 import type { Dict } from 'yummies/types';
-import { createStorageData } from './storage-data.js';
+import { createStorageData, type StorageDataKey } from './storage-data.js';
 
 describe('storageData', () => {
   beforeEach(() => {
@@ -43,8 +43,11 @@ describe('storageData', () => {
   });
 
   it('supports separate typed local and session storage keys', () => {
-    type LocalStorageValues = Dict<string | null, 'token' | 'theme'>;
-    type SessionStorageValues = Dict<string | null, 'draft' | 'redirectUrl'>;
+    type LocalStorageValues = Dict<string | null, 'shared' | 'theme' | 'token'>;
+    type SessionStorageValues = Dict<
+      string | null,
+      'draft' | 'redirectUrl' | 'shared'
+    >;
     const storageData = createStorageData<
       LocalStorageValues,
       SessionStorageValues
@@ -52,14 +55,45 @@ describe('storageData', () => {
 
     storageData.local.token = 'abc';
     storageData.session.redirectUrl = '/settings';
+    const tokenKey = storageData.key('token', '');
+    const themeKey = storageData.key('theme', '', 'local');
+    const redirectUrlKey = storageData.key('redirectUrl', '', 'session');
+    const draftKey = storageData.key('draft', '', 'session');
+    const localSharedKey = storageData.key('shared', '', 'local');
+    const sessionSharedKey = storageData.key('shared', '', 'session');
 
     expectTypeOf(storageData.local).toEqualTypeOf<LocalStorageValues>();
     expectTypeOf(storageData.session).toEqualTypeOf<SessionStorageValues>();
+    expectTypeOf(tokenKey).toEqualTypeOf<StorageDataKey<string>>();
+    expectTypeOf(themeKey).toEqualTypeOf<StorageDataKey<string>>();
+    expectTypeOf(redirectUrlKey).toEqualTypeOf<StorageDataKey<string>>();
+    expectTypeOf(draftKey).toEqualTypeOf<StorageDataKey<string>>();
+    expectTypeOf(localSharedKey).toEqualTypeOf<StorageDataKey<string>>();
+    expectTypeOf(sessionSharedKey).toEqualTypeOf<StorageDataKey<string>>();
 
     // @ts-expect-error - session key is not available in local storage
     storageData.local.redirectUrl;
     // @ts-expect-error - local key is not available in session storage
     storageData.session.theme;
+    // @ts-expect-error - default scope is local
+    storageData.key('redirectUrl', '');
+    // @ts-expect-error - session key is not available in local storage
+    storageData.key('redirectUrl', '', 'local');
+    // @ts-expect-error - local key is not available in session storage
+    storageData.key('theme', '', 'session');
+  });
+
+  it('keeps key accessor unrestricted without storage generics', () => {
+    const storageData = createStorageData();
+    const localKey = storageData.key('custom-local-key', '');
+    const sessionKey = storageData.key<number[]>(
+      'custom-session-key',
+      [],
+      'session',
+    );
+
+    expectTypeOf(localKey).toEqualTypeOf<StorageDataKey<string>>();
+    expectTypeOf(sessionKey).toEqualTypeOf<StorageDataKey<number[]>>();
   });
 
   it('supports Object.assign for local storage scope', () => {

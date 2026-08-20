@@ -61,9 +61,14 @@ export interface StorageData<
    * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/storage-data.html)
    */
   key<TValue>(
-    key: string,
+    key: keyof TLocal & string,
     defaultValue: TValue,
-    scope?: StorageScope,
+    scope?: 'local',
+  ): StorageDataKey<TValue>;
+  key<TValue>(
+    key: keyof TSession & string,
+    defaultValue: TValue,
+    scope: 'session',
   ): StorageDataKey<TValue>;
 }
 
