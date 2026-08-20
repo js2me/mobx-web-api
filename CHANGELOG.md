@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.14.2
+
+### Patch Changes
+
+- [`7fd8dec`](https://github.com/js2me/mobx-web-api/commit/7fd8dec38056195c05d513d0c44b0ba1cf418937) Thanks [@js2me](https://github.com/js2me)! - Add separate generic types for local and session storage keys.
+
 ## 1.14.1
 
 ### Patch Changes
