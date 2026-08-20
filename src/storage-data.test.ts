@@ -8,6 +8,7 @@ import {
   it,
   vi,
 } from 'vitest';
+import type { Dict } from 'yummies/types';
 import { createStorageData } from './storage-data.js';
 
 describe('storageData', () => {
@@ -39,6 +40,26 @@ describe('storageData', () => {
     storageData.session.draft = 'v1';
     expect(storageData.session.draft).toBe('v1');
     expect(globalThis.sessionStorage.getItem('draft')).toBe('v1');
+  });
+
+  it('supports separate typed local and session storage keys', () => {
+    type LocalStorageValues = Dict<string | null, 'token' | 'theme'>;
+    type SessionStorageValues = Dict<string | null, 'draft' | 'redirectUrl'>;
+    const storageData = createStorageData<
+      LocalStorageValues,
+      SessionStorageValues
+    >();
+
+    storageData.local.token = 'abc';
+    storageData.session.redirectUrl = '/settings';
+
+    expectTypeOf(storageData.local).toEqualTypeOf<LocalStorageValues>();
+    expectTypeOf(storageData.session).toEqualTypeOf<SessionStorageValues>();
+
+    // @ts-expect-error - session key is not available in local storage
+    storageData.local.redirectUrl;
+    // @ts-expect-error - local key is not available in session storage
+    storageData.session.theme;
   });
 
   it('supports Object.assign for local storage scope', () => {

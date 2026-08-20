@@ -43,7 +43,18 @@ export interface StorageDataKey<TValue = string | null> {
  * [MDN localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
  * [MDN sessionStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage)
  */
-export interface StorageData extends Dict<StorageValues, StorageScope> {
+export interface StorageData<
+  TLocal extends Dict<string | null> = Dict<string | null>,
+  TSession extends Dict<string | null> = Dict<string | null>,
+> {
+  /**
+   * Reactive local storage values.
+   */
+  local: TLocal;
+  /**
+   * Reactive session storage values.
+   */
+  session: TSession;
   /**
    * Typed helper for one key in local/session storage.
    *
@@ -161,9 +172,12 @@ const createStorageValues = (
  * Uses [Storage API](https://developer.mozilla.org/en-US/docs/Web/API/Storage)
  * and [Window: storage event](https://developer.mozilla.org/en-US/docs/Web/API/Window/storage_event).
  */
-export const createStorageData = (
+export const createStorageData = <
+  TLocal extends Dict<string | null> = Dict<string | null>,
+  TSession extends Dict<string | null> = Dict<string | null>,
+>(
   options?: CreateStorageDataOptions,
-): StorageData => {
+): StorageData<TLocal, TSession> => {
   const storages: Partial<Record<StorageScope, StorageValues>> = {};
 
   const getStorageValues = (scope: StorageScope) => {
@@ -174,12 +188,12 @@ export const createStorageData = (
     return storages[scope];
   };
 
-  const storageData: StorageData = {
+  const storageData: StorageData<TLocal, TSession> = {
     get local() {
-      return getStorageValues('local');
+      return getStorageValues('local') as TLocal;
     },
     get session() {
-      return getStorageValues('session');
+      return getStorageValues('session') as TSession;
     },
     key<TValue>(
       key: string,
