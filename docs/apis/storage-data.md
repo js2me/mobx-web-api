@@ -75,6 +75,25 @@ appStorage.local["token"] = "abc";
 // writes into localStorage key "app:token"
 ```
 
+You can specify storage keys and value types using TypeScript generics. If
+`scope` is omitted, `local` is used by default.
+
+```ts
+type LocalValues = {
+  token: string | null;
+  theme: string | null;
+};
+type SessionValues = {
+  draft: string | null;
+};
+
+const typedStorage = createStorageData<LocalValues, SessionValues>();
+
+typedStorage.key("token", ""); // local
+typedStorage.key("draft", "", "session"); // session
+// typedStorage.key("draft", ""); // TypeScript error: key is not local
+```
+
 ## API
 
 #### `storageData.local[key]`
