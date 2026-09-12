@@ -45,6 +45,8 @@ export default defineConfig({
         { text: 'Viewport info', link: '/apis/viewport-info' },
         { text: 'Preferred languages', link: '/apis/preferred-languages' },
         { text: 'Geolocation', link: '/apis/geolocation' },
+        { text: 'Intersection data', link: '/apis/intersection-data' },
+        { text: 'Resize data', link: '/apis/resize-data' },
       ],
     },
   ],
