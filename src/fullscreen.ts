@@ -28,6 +28,21 @@ const reportError = (error: unknown) => {
   fullscreen._atom?.reportChanged();
 };
 
+const fail = (error: unknown): Promise<boolean> => {
+  reportError(error);
+  return Promise.resolve(false);
+};
+
+const run = async (operation: () => Promise<void>): Promise<boolean> => {
+  try {
+    await operation();
+    return true;
+  } catch (error) {
+    reportError(error);
+    return false;
+  }
+};
+
 /**
  * Reactive Fullscreen API for MobX consumers.
  *
@@ -76,47 +91,28 @@ export const fullscreen: Fullscreen = {
     this._atom.reportObserved();
     return document.fullscreenElement;
   },
-  async request(element) {
+  request(element) {
     if (!this.isSupported) {
-      const error = createUnsupportedError();
-      reportError(error);
-      return false;
+      return fail(createUnsupportedError());
     }
 
     const target = toRef(element).current;
+
     if (!target?.requestFullscreen) {
-      const error = new Error('Fullscreen target is not available');
-      reportError(error);
-      return false;
+      return fail(new Error('Fullscreen target is not available'));
     }
 
-    try {
-      await target.requestFullscreen();
-      return true;
-    } catch (error) {
-      reportError(error);
-      return false;
-    }
+    return run(() => target.requestFullscreen());
   },
-  async exit() {
+  exit() {
     if (!this.isSupported || !getDocument()?.fullscreenElement) {
-      return false;
+      return Promise.resolve(false);
     }
 
-    try {
-      await getDocument()!.exitFullscreen();
-      return true;
-    } catch (error) {
-      reportError(error);
-      return false;
-    }
+    return run(() => getDocument()!.exitFullscreen());
   },
-  async toggle(element) {
-    if (this.isActive) {
-      return this.exit();
-    } else {
-      return this.request(element);
-    }
+  toggle(element) {
+    return this.isActive ? this.exit() : this.request(element);
   },
   get error() {
     this.element;

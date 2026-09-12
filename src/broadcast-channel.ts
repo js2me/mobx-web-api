@@ -25,8 +25,6 @@ export const createBroadcastChannel = <TMessage>(
   let channel: BroadcastChannel | undefined;
   let message: TMessage | null = null;
   let error: unknown;
-  let messageListener: ((event: MessageEvent<TMessage>) => void) | undefined;
-  let errorListener: ((event: Event) => void) | undefined;
 
   const getOrCreateChannel = () => {
     if (typeof globalThis.BroadcastChannel !== 'function') {
@@ -36,6 +34,39 @@ export const createBroadcastChannel = <TMessage>(
     channel ??= new globalThis.BroadcastChannel(name);
     return channel;
   };
+
+  const atom = createEnhancedAtom<{ detach?: VoidFunction }>(
+    '',
+    (self) => {
+      const currentChannel = getOrCreateChannel();
+
+      if (!currentChannel) {
+        return;
+      }
+
+      const onMessage = (event: MessageEvent<TMessage>) => {
+        message = event.data;
+        self.reportChanged();
+      };
+      const onMessageError = (event: Event) => {
+        error = event;
+        self.reportChanged();
+      };
+
+      currentChannel.addEventListener('message', onMessage);
+      currentChannel.addEventListener('messageerror', onMessageError);
+
+      self.meta.detach = () => {
+        currentChannel.removeEventListener('message', onMessage);
+        currentChannel.removeEventListener('messageerror', onMessageError);
+      };
+    },
+    (self) => {
+      self.meta.detach?.();
+      self.meta.detach = undefined;
+    },
+    {},
+  );
 
   const data: BroadcastChannelData<TMessage> = {
     name,
@@ -50,8 +81,9 @@ export const createBroadcastChannel = <TMessage>(
       atom.reportObserved();
       return error;
     },
-    postMessage(message) {
+    postMessage(nextMessage) {
       const currentChannel = getOrCreateChannel();
+
       if (!currentChannel) {
         error = createUnsupportedError();
         atom.reportChanged();
@@ -59,7 +91,7 @@ export const createBroadcastChannel = <TMessage>(
       }
 
       try {
-        currentChannel.postMessage(message);
+        currentChannel.postMessage(nextMessage);
         return true;
       } catch (nextError) {
         error = nextError;
@@ -68,50 +100,12 @@ export const createBroadcastChannel = <TMessage>(
       }
     },
     close() {
-      if (!channel) {
-        return;
-      }
-
-      if (messageListener) {
-        channel.removeEventListener('message', messageListener);
-      }
-      if (errorListener) {
-        channel.removeEventListener('messageerror', errorListener);
-      }
-      channel.close();
+      atom.meta.detach?.();
+      atom.meta.detach = undefined;
+      channel?.close();
       channel = undefined;
     },
   };
-
-  const atom = createEnhancedAtom(
-    '',
-    () => {
-      const currentChannel = getOrCreateChannel();
-      if (!currentChannel) {
-        return;
-      }
-      messageListener = (event) => {
-        message = event.data;
-        atom.reportChanged();
-      };
-      errorListener = (event) => {
-        error = event;
-        atom.reportChanged();
-      };
-      currentChannel.addEventListener('message', messageListener);
-      currentChannel.addEventListener('messageerror', errorListener);
-    },
-    () => {
-      if (channel && messageListener) {
-        channel.removeEventListener('message', messageListener);
-      }
-      if (channel && errorListener) {
-        channel.removeEventListener('messageerror', errorListener);
-      }
-      messageListener = undefined;
-      errorListener = undefined;
-    },
-  );
 
   data._atom = atom;
   return data;
