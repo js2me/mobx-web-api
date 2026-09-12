@@ -1,5 +1,14 @@
 # mobx-web-api
 
+## 1.16.1
+
+### Patch Changes
+
+- [`65bb5f9`](https://github.com/js2me/mobx-web-api/commit/65bb5f9633ba85a36c6ac9e8da9d8a1d7f18ad91) Thanks [@js2me](https://github.com/js2me)! - Fullscreen API refinements:
+
+  - `request` and `toggle` element argument is now optional and defaults to `document.documentElement`
+  - `fullscreen.error` now only contains errors raised by the underlying Fullscreen API, predictable failures just resolve to `false`
+
 ## 1.16.0
 
 ### Minor Changes
