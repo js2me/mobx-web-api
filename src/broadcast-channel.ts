@@ -4,8 +4,8 @@ export interface BroadcastChannelData<TMessage> {
   readonly name: string;
   readonly isSupported: boolean;
   readonly message: TMessage | null;
-  readonly error?: Event;
-  postMessage(message: TMessage): void;
+  readonly error?: unknown;
+  postMessage(message: TMessage): boolean;
   close(): void;
   _atom?: IEnhancedAtom;
 }
@@ -24,13 +24,13 @@ export const createBroadcastChannel = <TMessage>(
 ): BroadcastChannelData<TMessage> => {
   let channel: BroadcastChannel | undefined;
   let message: TMessage | null = null;
-  let error: Event | undefined;
+  let error: unknown;
   let messageListener: ((event: MessageEvent<TMessage>) => void) | undefined;
   let errorListener: ((event: Event) => void) | undefined;
 
-  const ensureChannel = () => {
+  const getOrCreateChannel = () => {
     if (typeof globalThis.BroadcastChannel !== 'function') {
-      throw createUnsupportedError();
+      return undefined;
     }
 
     channel ??= new globalThis.BroadcastChannel(name);
@@ -51,7 +51,21 @@ export const createBroadcastChannel = <TMessage>(
       return error;
     },
     postMessage(message) {
-      ensureChannel().postMessage(message);
+      const currentChannel = getOrCreateChannel();
+      if (!currentChannel) {
+        error = createUnsupportedError();
+        atom.reportChanged();
+        return false;
+      }
+
+      try {
+        currentChannel.postMessage(message);
+        return true;
+      } catch (nextError) {
+        error = nextError;
+        atom.reportChanged();
+        return false;
+      }
     },
     close() {
       if (!channel) {
@@ -72,7 +86,10 @@ export const createBroadcastChannel = <TMessage>(
   const atom = createEnhancedAtom(
     '',
     () => {
-      const currentChannel = ensureChannel();
+      const currentChannel = getOrCreateChannel();
+      if (!currentChannel) {
+        return;
+      }
       messageListener = (event) => {
         message = event.data;
         atom.reportChanged();

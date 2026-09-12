@@ -68,8 +68,7 @@ describe('createBroadcastChannel', () => {
     const channel = createBroadcastChannel('app');
 
     expect(channel.isSupported).toBe(false);
-    expect(() => channel.postMessage('message')).toThrow(
-      'BroadcastChannel API is not supported',
-    );
+    expect(channel.postMessage('message')).toBe(false);
+    expect(channel.error).toBeInstanceOf(Error);
   });
 });

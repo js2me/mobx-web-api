@@ -109,13 +109,13 @@ describe('fullscreen', () => {
 
     expect(fullscreen.isSupported).toBe(false);
     expect(fullscreen.isActive).toBe(false);
-    await expect(fullscreen.exit()).resolves.toBeUndefined();
+    await expect(fullscreen.exit()).resolves.toBe(false);
     await expect(
       fullscreen.request(document.createElement('div')),
-    ).rejects.toThrow('Fullscreen API is not supported');
+    ).resolves.toBe(false);
   });
 
-  it('stores request errors and rethrows them', async () => {
+  it('stores request errors and returns false', async () => {
     const requestError = new Error('request failed');
     const element = document.createElement('div');
 
@@ -132,7 +132,7 @@ describe('fullscreen', () => {
       value: vi.fn(),
     });
 
-    await expect(fullscreen.request(element)).rejects.toBe(requestError);
+    await expect(fullscreen.request(element)).resolves.toBe(false);
     expect(fullscreen.error).toBe(requestError);
   });
 });

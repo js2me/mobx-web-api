@@ -10,9 +10,9 @@ export interface Fullscreen {
   isActive: boolean;
   element: Element | null;
   error?: unknown;
-  request(element: Element | Ref<Element, any>): Promise<void>;
-  exit(): Promise<void>;
-  toggle(element: Element | Ref<Element, any>): Promise<void>;
+  request(element: Element | Ref<Element, any>): Promise<boolean>;
+  exit(): Promise<boolean>;
+  toggle(element: Element | Ref<Element, any>): Promise<boolean>;
   _atom?: IEnhancedAtom;
 }
 
@@ -80,40 +80,42 @@ export const fullscreen: Fullscreen = {
     if (!this.isSupported) {
       const error = createUnsupportedError();
       reportError(error);
-      throw error;
+      return false;
     }
 
     const target = toRef(element).current;
     if (!target?.requestFullscreen) {
       const error = new Error('Fullscreen target is not available');
       reportError(error);
-      throw error;
+      return false;
     }
 
     try {
       await target.requestFullscreen();
+      return true;
     } catch (error) {
       reportError(error);
-      throw error;
+      return false;
     }
   },
   async exit() {
     if (!this.isSupported || !getDocument()?.fullscreenElement) {
-      return;
+      return false;
     }
 
     try {
       await getDocument()!.exitFullscreen();
+      return true;
     } catch (error) {
       reportError(error);
-      throw error;
+      return false;
     }
   },
   async toggle(element) {
     if (this.isActive) {
-      await this.exit();
+      return this.exit();
     } else {
-      await this.request(element);
+      return this.request(element);
     }
   },
   get error() {

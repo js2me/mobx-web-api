@@ -46,6 +46,7 @@ The latest `messageerror` event, if one occurred.
 ### `postMessage(message)`
 
 Sends a structured-cloneable message to other contexts using the same channel name.
+Returns `true` when the message is sent and `false` when the API is unavailable or sending fails. The reason is available in `error`.
 
 ### `close()`
 
