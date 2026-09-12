@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.15.0
+
+### Minor Changes
+
+- [`3a866ad`](https://github.com/js2me/mobx-web-api/commit/3a866ad075b86cbe45da14d4f0da9e44acd33140) Thanks [@js2me](https://github.com/js2me)! - Add reactive `ResizeObserver` and `IntersectionObserver` utilities with support for MobX refs.
+
 ## 1.14.2
 
 ### Patch Changes
