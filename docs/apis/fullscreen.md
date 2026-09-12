@@ -33,13 +33,14 @@ The current fullscreen element, or `null`.
 
 ### `error`
 
-The last error raised by a fullscreen operation.
+The last error raised by the underlying Fullscreen API.
 
 ## Methods
 
-### `request(element)`
+### `request(element?)`
 
 Requests fullscreen mode for an element or MobX `Ref<Element>`.
+When omitted, defaults to `document.documentElement`.
 Resolves to `true` when the request succeeds and `false` when it cannot be performed.
 
 ### `exit()`
@@ -47,9 +48,10 @@ Resolves to `true` when the request succeeds and `false` when it cannot be perfo
 Exits fullscreen mode. The returned promise resolves without doing anything when fullscreen is inactive.
 It resolves to `true` when fullscreen is exited and `false` otherwise.
 
-### `toggle(element)`
+### `toggle(element?)`
 
 Enters fullscreen when inactive and exits fullscreen when active.
+When entering and `element` is omitted, defaults to `document.documentElement`.
 Resolves to whether the operation succeeded.
 
 [MDN Fullscreen API](https://developer.mozilla.org/en-US/docs/Web/API/Fullscreen_API)

@@ -10,27 +10,17 @@ export interface Fullscreen {
   isActive: boolean;
   element: Element | null;
   error?: unknown;
-  request(element: Element | Ref<Element, any>): Promise<boolean>;
+  request(element?: Element | Ref<Element, any>): Promise<boolean>;
   exit(): Promise<boolean>;
-  toggle(element: Element | Ref<Element, any>): Promise<boolean>;
+  toggle(element?: Element | Ref<Element, any>): Promise<boolean>;
   _atom?: IEnhancedAtom;
 }
-
-const getDocument = () => globalThis.document;
-
-const createUnsupportedError = () =>
-  new Error('Fullscreen API is not supported');
 
 let fullscreenError: unknown;
 
 const reportError = (error: unknown) => {
   fullscreenError = error;
   fullscreen._atom?.reportChanged();
-};
-
-const fail = (error: unknown): Promise<boolean> => {
-  reportError(error);
-  return Promise.resolve(false);
 };
 
 const run = async (operation: () => Promise<void>): Promise<boolean> => {
@@ -51,7 +41,7 @@ const run = async (operation: () => Promise<void>): Promise<boolean> => {
  */
 export const fullscreen: Fullscreen = {
   get isSupported() {
-    const document = getDocument();
+    const document = globalThis.document;
     const documentElement = document?.documentElement as
       | (Document['documentElement'] & {
           requestFullscreen?: unknown;
@@ -68,7 +58,7 @@ export const fullscreen: Fullscreen = {
     return this.element !== null;
   },
   get element() {
-    const document = getDocument();
+    const document = globalThis.document;
 
     if (!document) {
       return null;
@@ -91,25 +81,28 @@ export const fullscreen: Fullscreen = {
     this._atom.reportObserved();
     return document.fullscreenElement;
   },
-  request(element) {
+  request(element?) {
     if (!this.isSupported) {
-      return fail(createUnsupportedError());
+      return Promise.resolve(false);
     }
 
-    const target = toRef(element).current;
+    const target =
+      element != null
+        ? toRef(element).current
+        : globalThis.document?.documentElement;
 
     if (!target?.requestFullscreen) {
-      return fail(new Error('Fullscreen target is not available'));
+      return Promise.resolve(false);
     }
 
     return run(() => target.requestFullscreen());
   },
   exit() {
-    if (!this.isSupported || !getDocument()?.fullscreenElement) {
+    if (!this.isSupported || !globalThis.document?.fullscreenElement) {
       return Promise.resolve(false);
     }
 
-    return run(() => getDocument()!.exitFullscreen());
+    return run(() => globalThis.document!.exitFullscreen());
   },
   toggle(element) {
     return this.isActive ? this.exit() : this.request(element);

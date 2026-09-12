@@ -135,4 +135,70 @@ describe('fullscreen', () => {
     await expect(fullscreen.request(element)).resolves.toBe(false);
     expect(fullscreen.error).toBe(requestError);
   });
+
+  it('falls back to documentElement when no element is passed', async () => {
+    const requestFullscreen = vi.fn(async () => {
+      Object.defineProperty(document, 'fullscreenElement', {
+        configurable: true,
+        value: document.documentElement,
+      });
+      document.dispatchEvent(new Event('fullscreenchange'));
+    });
+
+    Object.defineProperty(document, 'fullscreenEnabled', {
+      configurable: true,
+      value: true,
+    });
+    Object.defineProperty(document, 'fullscreenElement', {
+      configurable: true,
+      value: null,
+      writable: true,
+    });
+    Object.defineProperty(document, 'exitFullscreen', {
+      configurable: true,
+      value: vi.fn(async () => {
+        Object.defineProperty(document, 'fullscreenElement', {
+          configurable: true,
+          value: null,
+        });
+        document.dispatchEvent(new Event('fullscreenchange'));
+      }),
+    });
+    Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', {
+      configurable: true,
+      value: requestFullscreen,
+    });
+
+    await expect(fullscreen.request()).resolves.toBe(true);
+    expect(requestFullscreen).toHaveBeenCalledTimes(1);
+    expect(requestFullscreen.mock.instances[0]).toBe(document.documentElement);
+    expect(fullscreen.element).toBe(document.documentElement);
+
+    await expect(fullscreen.toggle()).resolves.toBe(true);
+    expect(fullscreen.element).toBeNull();
+  });
+
+  it('fails on unmounted ref without falling back to documentElement', async () => {
+    const requestFullscreen = vi.fn();
+
+    Object.defineProperty(document, 'fullscreenEnabled', {
+      configurable: true,
+      value: true,
+    });
+    Object.defineProperty(document, 'fullscreenElement', {
+      configurable: true,
+      value: null,
+    });
+    Object.defineProperty(document, 'exitFullscreen', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', {
+      configurable: true,
+      value: requestFullscreen,
+    });
+
+    await expect(fullscreen.request({ current: null })).resolves.toBe(false);
+    expect(requestFullscreen).not.toHaveBeenCalled();
+  });
 });
