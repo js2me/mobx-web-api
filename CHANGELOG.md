@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.16.0
+
+### Minor Changes
+
+- [`8041fe5`](https://github.com/js2me/mobx-web-api/commit/8041fe586cdddadfcb1f524bbd11ea2ce9035df5) Thanks [@js2me](https://github.com/js2me)! - Add reactive Fullscreen and BroadcastChannel browser API utilities.
+
 ## 1.15.0
 
 ### Minor Changes
