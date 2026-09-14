@@ -1,6 +1,6 @@
 <img src="docs/public/logo.png" align="right" width="156" alt="logo" />
 
-# mobx-web-api  
+# mobx-web-api   
 
 [![NPM version][npm-image]][npm-url] [![build status][github-build-actions-image]][github-actions-url] [![npm download][download-image]][download-url] [![bundle size][bundlephobia-image]][bundlephobia-url]
 
