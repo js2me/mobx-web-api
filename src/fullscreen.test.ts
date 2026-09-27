@@ -1,5 +1,6 @@
 import { reaction } from 'mobx';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createRef } from 'yummies/mobx';
 import { fullscreen } from './fullscreen.js';
 
 describe('fullscreen', () => {
@@ -198,7 +199,7 @@ describe('fullscreen', () => {
       value: requestFullscreen,
     });
 
-    await expect(fullscreen.request({ current: null })).resolves.toBe(false);
+    await expect(fullscreen.request(createRef<Element>())).resolves.toBe(false);
     expect(requestFullscreen).not.toHaveBeenCalled();
   });
 });

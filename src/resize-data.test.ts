@@ -5,6 +5,32 @@ import { createResizeData } from './resize-data.js';
 
 type ResizeCallback = (entries: ResizeObserverEntry[]) => void;
 
+const createResizeEntry = (
+  target: Element,
+  width: number,
+  height = 0,
+): ResizeObserverEntry => {
+  const boxSize = [{ inlineSize: width, blockSize: height }];
+
+  return {
+    target,
+    contentRect: {
+      x: 0,
+      y: 0,
+      width,
+      height,
+      top: 0,
+      left: 0,
+      right: width,
+      bottom: height,
+      toJSON: () => ({}),
+    },
+    borderBoxSize: boxSize,
+    contentBoxSize: boxSize,
+    devicePixelContentBoxSize: boxSize,
+  };
+};
+
 describe('createResizeData', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -34,12 +60,7 @@ describe('createResizeData', () => {
 
     expect(observe).toHaveBeenCalledWith(element);
 
-    callback?.([
-      {
-        target: element,
-        contentRect: { width: 320, height: 180 } as DOMRectReadOnly,
-      } as ResizeObserverEntry,
-    ]);
+    callback?.([createResizeEntry(element, 320, 180)]);
 
     expect(data.width).toBe(320);
     expect(data.height).toBe(180);
@@ -82,18 +103,8 @@ describe('createResizeData', () => {
     expect(observe).toHaveBeenCalledWith(firstElement);
     expect(observe).toHaveBeenCalledWith(secondElement);
 
-    callbacks[0]?.([
-      {
-        target: firstElement,
-        contentRect: { width: 320 },
-      } as ResizeObserverEntry,
-    ]);
-    callbacks[1]?.([
-      {
-        target: secondElement,
-        contentRect: { width: 640 },
-      } as ResizeObserverEntry,
-    ]);
+    callbacks[0]?.([createResizeEntry(firstElement, 320)]);
+    callbacks[1]?.([createResizeEntry(secondElement, 640)]);
 
     expect(data.map(({ width }) => width)).toEqual([320, 640]);
 
@@ -169,9 +180,7 @@ describe('createResizeData', () => {
     );
 
     expect(observe).toHaveBeenCalledTimes(1);
-    callback?.([
-      { target: element, contentRect: { width: 250 } } as ResizeObserverEntry,
-    ]);
+    callback?.([createResizeEntry(element, 250)]);
     expect(widths).toEqual([250]);
 
     controller.unobserve(element);
@@ -212,12 +221,8 @@ describe('createResizeData', () => {
     );
 
     expect(observe).toHaveBeenCalledTimes(2);
-    callbacks[0]?.([
-      { target: element, contentRect: { width: 300 } } as ResizeObserverEntry,
-    ]);
-    callbacks[1]?.([
-      { target: element, contentRect: { width: 300 } } as ResizeObserverEntry,
-    ]);
+    callbacks[0]?.([createResizeEntry(element, 300)]);
+    callbacks[1]?.([createResizeEntry(element, 300)]);
     expect(firstData.width).toBe(300);
     expect(secondData.width).toBe(300);
 
@@ -225,9 +230,7 @@ describe('createResizeData', () => {
     expect(unobserve).toHaveBeenCalledTimes(1);
     expect(disconnect).toHaveBeenCalledTimes(1);
 
-    callbacks[1]?.([
-      { target: element, contentRect: { width: 350 } } as ResizeObserverEntry,
-    ]);
+    callbacks[1]?.([createResizeEntry(element, 350)]);
     expect(firstData.width).toBe(0);
     expect(secondData.width).toBe(350);
 
@@ -306,18 +309,8 @@ describe('createResizeData', () => {
     expect(observe).toHaveBeenNthCalledWith(1, firstElement);
     expect(observe).toHaveBeenNthCalledWith(2, secondElement);
 
-    callbacks[0]?.([
-      {
-        target: firstElement,
-        contentRect: { width: 320 },
-      } as ResizeObserverEntry,
-    ]);
-    callbacks[1]?.([
-      {
-        target: secondElement,
-        contentRect: { width: 640 },
-      } as ResizeObserverEntry,
-    ]);
+    callbacks[0]?.([createResizeEntry(firstElement, 320)]);
+    callbacks[1]?.([createResizeEntry(secondElement, 640)]);
     expect(widths.at(-1)).toEqual([320, 640]);
 
     firstRef.set(replacementElement);

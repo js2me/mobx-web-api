@@ -75,6 +75,13 @@ const createFakeNavigation = (): FakeNavigation => {
   return fakeNavigation as unknown as FakeNavigation;
 };
 
+const installNavigation = (navigation: FakeNavigation) => {
+  Object.defineProperty(globalThis, 'navigation', {
+    value: navigation,
+    configurable: true,
+  });
+};
+
 describe('navigationInfo', () => {
   let navigationInfo: NavigationInfo;
   const originalNavigation = Object.getOwnPropertyDescriptor(
@@ -122,9 +129,27 @@ describe('navigationInfo', () => {
     expect(navigationInfo.canGoBack).toBe(false);
     expect(navigationInfo.canGoForward).toBe(false);
     expect(navigationInfo.back()).toBeUndefined();
+    expect(navigationInfo.forward()).toBeUndefined();
+    expect(navigationInfo.reload()).toBeUndefined();
+    expect(navigationInfo.traverseTo('missing')).toBeUndefined();
     expect(
       navigationInfo.navigate('/settings', { query: { tab: 'profile' } }),
     ).toBeUndefined();
+  });
+
+  it.each([
+    { name: 'empty object', navigation: {} },
+    { name: 'without navigate', navigation: { entries: () => [] } },
+    { name: 'without entries', navigation: { navigate: () => undefined } },
+  ])('does not report partial Navigation API as supported: $name', ({
+    navigation,
+  }) => {
+    Object.defineProperty(globalThis, 'navigation', {
+      value: navigation,
+      configurable: true,
+    });
+
+    expect(navigationInfo.isSupported).toBe(false);
   });
 
   it('isolates SSR snapshots between instances', () => {
@@ -151,7 +176,12 @@ describe('navigationInfo', () => {
   });
 
   it('uses the browser entry instead of the SSR snapshot when available', () => {
-    const info = createNavigationInfo({ ssrSnapshot: entry('server', 0) });
+    const info = createNavigationInfo({
+      ssrSnapshot: {
+        ...entry('server', 0),
+        getState: () => ({ from: 'server' }),
+      },
+    });
     const navigation = createFakeNavigation();
     Object.defineProperty(globalThis, 'navigation', {
       value: navigation,
@@ -162,6 +192,7 @@ describe('navigationInfo', () => {
 
     navigation.currentEntry = null;
     expect(info.currentEntry.key).toBe('server');
+    expect(info.state).toEqual({ from: 'server' });
     expect(navigationInfo.currentEntry.index).toBe(-1);
   });
 
@@ -189,6 +220,54 @@ describe('navigationInfo', () => {
 
     expect(firstSpy).not.toHaveBeenCalled();
     expect(secondSpy).toHaveBeenCalledOnce();
+
+    disposeSecond();
+    expect(navigation.removeEventListener).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not subscribe until a reactive field is observed', () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+
+    expect(navigationInfo.currentEntry.key).toBe('current');
+    expect(navigationInfo.path).toBe('/current');
+    expect(navigationInfo.entries).toHaveLength(1);
+    expect(navigationInfo.canGoBack).toBe(false);
+    expect(navigation.addEventListener).not.toHaveBeenCalled();
+
+    const dispose = reaction(
+      () => [navigationInfo.path, navigationInfo.canGoForward],
+      () => undefined,
+    );
+
+    expect(navigation.addEventListener).toHaveBeenCalledExactlyOnceWith(
+      'currententrychange',
+      expect.any(Function),
+    );
+
+    dispose();
+    expect(navigation.removeEventListener).toHaveBeenCalledOnce();
+  });
+
+  it('subscribes again after the last observer disposes', () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+    const onChange = vi.fn();
+
+    const disposeFirst = reaction(() => navigationInfo.path, onChange);
+    disposeFirst();
+    const disposeSecond = reaction(() => navigationInfo.path, onChange);
+
+    expect(navigation.addEventListener).toHaveBeenCalledTimes(2);
+    expect(navigation.removeEventListener).toHaveBeenCalledOnce();
+
+    navigation.currentEntry = entry('next', 1);
+    navigation.emit('currententrychange');
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(
+      '/next',
+      '/current',
+      expect.anything(),
+    );
 
     disposeSecond();
     expect(navigation.removeEventListener).toHaveBeenCalledTimes(2);
@@ -554,5 +633,216 @@ describe('navigationInfo', () => {
     expect(navigationInfo.url).not.toBe(initialURL);
 
     dispose();
+  });
+
+  describe('navigate input variants', () => {
+    const currentURL = 'https://example.com/account/profile?old=1#details';
+
+    it.each([
+      { name: 'absolute pathname', input: '/settings', expected: '/settings' },
+      { name: 'relative pathname', input: 'settings', expected: 'settings' },
+      {
+        name: 'query string',
+        input: '?tab=security',
+        expected: '?tab=security',
+      },
+      { name: 'hash', input: '#next', expected: '#next' },
+      { name: 'null', input: null, expected: currentURL },
+      { name: 'empty string', input: '', expected: currentURL },
+    ])('forwards $name without query or extra options', ({
+      input,
+      expected,
+    }) => {
+      const navigation = createFakeNavigation();
+      navigation.currentEntry = { ...entry('current', 0), url: currentURL };
+      installNavigation(navigation);
+
+      const result = navigationInfo.navigate(input);
+
+      expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(expected);
+      expect(result).toBe(navigation.navigate.mock.results[0]?.value);
+    });
+
+    it('forwards URL objects unchanged without query', () => {
+      const navigation = createFakeNavigation();
+      installNavigation(navigation);
+      const url = new URL('https://example.com/settings#account');
+
+      navigationInfo.navigate(url);
+
+      expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(url);
+    });
+
+    it.each([
+      { name: 'null', input: null },
+      { name: 'empty string', input: '' },
+    ])('uses current URL for $name with native options', ({ input }) => {
+      const navigation = createFakeNavigation();
+      navigation.currentEntry = { ...entry('current', 0), url: currentURL };
+      installNavigation(navigation);
+
+      navigationInfo.navigate(input, {
+        history: 'replace',
+        state: { count: 1 },
+      });
+
+      expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(currentURL, {
+        history: 'replace',
+        state: { count: 1 },
+      });
+    });
+
+    it('does not add or modify query when options.query is undefined', () => {
+      const navigation = createFakeNavigation();
+      installNavigation(navigation);
+
+      navigationInfo.navigate('/settings?old=1#details', {
+        history: 'push',
+        query: undefined,
+      });
+
+      expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(
+        '/settings?old=1#details',
+        { history: 'push' },
+      );
+    });
+
+    it.each([
+      { name: 'options.query', input: null, options: { query: {} } },
+      { name: 'first argument', input: {}, options: undefined },
+    ])('clears existing query with empty $name', ({ input, options }) => {
+      const navigation = createFakeNavigation();
+      navigation.currentEntry = { ...entry('current', 0), url: currentURL };
+      installNavigation(navigation);
+
+      navigationInfo.navigate(input, options);
+
+      expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(
+        'https://example.com/account/profile#details',
+        {},
+      );
+    });
+
+    it('resolves relative paths and replaces the query without losing the hash', () => {
+      const navigation = createFakeNavigation();
+      navigation.currentEntry = { ...entry('current', 0), url: currentURL };
+      installNavigation(navigation);
+
+      navigationInfo.navigate('../settings?old=1#section', {
+        query: { tab: 'profile' },
+      });
+
+      expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(
+        'https://example.com/settings?tab=profile#section',
+        {},
+      );
+    });
+
+    it('accepts URL objects with query without mutating the original', () => {
+      const navigation = createFakeNavigation();
+      installNavigation(navigation);
+      const url = new URL('https://example.com/settings?old=1#account');
+
+      navigationInfo.navigate(url, {
+        history: 'replace',
+        query: { tab: 'security' },
+      });
+
+      expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(
+        'https://example.com/settings?tab=security#account',
+        { history: 'replace' },
+      );
+      expect(url.href).toBe('https://example.com/settings?old=1#account');
+    });
+
+    it('accepts an absolute URL with query and preserves its origin', () => {
+      const navigation = createFakeNavigation();
+      installNavigation(navigation);
+
+      navigationInfo.navigate('https://other.example/settings?old=1#account', {
+        query: { page: 2 },
+      });
+
+      expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(
+        'https://other.example/settings?page=2#account',
+        {},
+      );
+    });
+
+    it('encodes special characters and filters nullish and empty arrays', () => {
+      const navigation = createFakeNavigation();
+      installNavigation(navigation);
+
+      navigationInfo.navigate('/search', {
+        query: {
+          'a&b': 'a + b',
+          name: 'Привет',
+          active: false,
+          zero: 0,
+          empty: '',
+          tags: ['first', null, undefined, 'second'],
+          missing: [null, undefined],
+          none: [],
+        },
+      });
+
+      expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(
+        'https://example.com/search?a%26b=a+%2B+b&name=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82&active=false&zero=0&empty=&tags=first&tags=second',
+        {},
+      );
+    });
+
+    it('uses the first argument as query when options.query also exists', () => {
+      const navigation = createFakeNavigation();
+      navigation.currentEntry = { ...entry('current', 0), url: currentURL };
+      installNavigation(navigation);
+
+      navigationInfo.navigate(
+        { page: 2 },
+        { history: 'replace', query: { page: 3 } },
+      );
+
+      expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(
+        'https://example.com/account/profile?page=2#details',
+        { history: 'replace' },
+      );
+    });
+
+    it('uses location.href if there is no current entry', () => {
+      const navigation = createFakeNavigation();
+      navigation.currentEntry = null;
+      installNavigation(navigation);
+
+      navigationInfo.navigate(null, { history: 'replace' });
+
+      expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(
+        globalThis.location.href,
+        { history: 'replace' },
+      );
+    });
+
+    it('does not invoke the native API for query-only navigation in SSR', () => {
+      Object.defineProperty(globalThis, 'navigation', {
+        value: undefined,
+        configurable: true,
+      });
+
+      expect(navigationInfo.navigate({ tab: 'profile' })).toBeUndefined();
+      expect(
+        navigationInfo.navigate(null, { query: { page: 2 } }),
+      ).toBeUndefined();
+      expect(navigationInfo.navigate('')).toBeUndefined();
+    });
+
+    it('propagates native navigation errors', () => {
+      const navigation = createFakeNavigation();
+      installNavigation(navigation);
+      const error = new Error('Native navigation failed');
+      navigation.navigate.mockImplementationOnce(() => {
+        throw error;
+      });
+
+      expect(() => navigationInfo.navigate('/settings')).toThrow(error);
+    });
   });
 });

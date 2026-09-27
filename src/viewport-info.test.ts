@@ -4,7 +4,9 @@ import { viewportInfo } from './viewport-info.js';
 
 type ViewportEvent = 'resize' | 'scroll';
 
-type FakeViewport = VisualViewport & {
+type FakeViewport = Omit<VisualViewport, 'width' | 'height'> & {
+  width: number;
+  height: number;
   emit(event: ViewportEvent): void;
   addEventListener: ReturnType<typeof vi.fn>;
   removeEventListener: ReturnType<typeof vi.fn>;

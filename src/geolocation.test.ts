@@ -67,7 +67,7 @@ describe('geolocation SSR safety', () => {
     });
 
     const provider = new BaseGeolocationProvider();
-    (provider as BaseGeolocationProvider & { watchId: number }).watchId = 1;
+    Object.defineProperty(provider, 'watchId', { value: 1 });
 
     expect(() => provider.deactivate()).not.toThrow();
   });
