@@ -55,6 +55,90 @@ describe('createIntersectionData', () => {
     expect(disconnect).toHaveBeenCalledTimes(1);
   });
 
+  it('tracks multiple elements in array order with lazy observers', () => {
+    const callbacks: IntersectionCallback[] = [];
+    const observe = vi.fn();
+    const disconnect = vi.fn();
+    const ObserverMock = vi.fn((nextCallback: IntersectionCallback) => {
+      callbacks.push(nextCallback);
+      return { observe, unobserve: vi.fn(), disconnect };
+    });
+    vi.stubGlobal('IntersectionObserver', ObserverMock);
+
+    const firstElement = document.createElement('div');
+    const secondElement = document.createElement('div');
+    const data = createIntersectionData([firstElement, secondElement]);
+    expect(ObserverMock).not.toHaveBeenCalled();
+
+    const dispose = reaction(
+      () => data.map(({ isIntersecting }) => isIntersecting),
+      () => undefined,
+    );
+    expect(ObserverMock).toHaveBeenCalledTimes(2);
+    expect(observe).toHaveBeenCalledWith(firstElement);
+    expect(observe).toHaveBeenCalledWith(secondElement);
+
+    callbacks[0]?.([
+      {
+        isIntersecting: true,
+        intersectionRatio: 1,
+      } as IntersectionObserverEntry,
+    ]);
+    callbacks[1]?.([
+      {
+        isIntersecting: false,
+        intersectionRatio: 0,
+      } as IntersectionObserverEntry,
+    ]);
+    expect(data.map(({ isIntersecting }) => isIntersecting)).toEqual([
+      true,
+      false,
+    ]);
+
+    dispose();
+    expect(disconnect).toHaveBeenCalledTimes(2);
+  });
+
+  it('supports lazy observe and unobserve through a controller', () => {
+    const callbacks: IntersectionCallback[] = [];
+    const observe = vi.fn();
+    const unobserve = vi.fn();
+    const disconnect = vi.fn();
+    const ObserverMock = vi.fn((nextCallback: IntersectionCallback) => {
+      callbacks.push(nextCallback);
+      return { observe, unobserve, disconnect };
+    });
+    vi.stubGlobal('IntersectionObserver', ObserverMock);
+
+    const element = document.createElement('div');
+    const elementRef = createRef<HTMLDivElement>({ initial: element });
+    const controller = createIntersectionData(null, { threshold: 0.5 });
+    const data = controller.observe(elementRef);
+
+    expect(ObserverMock).not.toHaveBeenCalled();
+    const dispose = reaction(
+      () => data.isIntersecting,
+      () => undefined,
+    );
+    expect(ObserverMock).toHaveBeenCalledTimes(1);
+    expect(observe).toHaveBeenCalledWith(element);
+
+    callbacks[0]?.([
+      {
+        isIntersecting: true,
+        intersectionRatio: 0.75,
+      } as IntersectionObserverEntry,
+    ]);
+    expect(data.isIntersecting).toBe(true);
+
+    controller.unobserve(elementRef);
+    expect(unobserve).toHaveBeenCalledWith(element);
+    expect(disconnect).toHaveBeenCalledTimes(1);
+    expect(data.isIntersecting).toBe(false);
+
+    dispose();
+  });
+
   it('returns safe defaults when IntersectionObserver is unavailable', () => {
     vi.stubGlobal('IntersectionObserver', undefined);
 

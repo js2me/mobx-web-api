@@ -1,5 +1,10 @@
-import { createEnhancedAtom, type Ref, toRef } from 'yummies/mobx';
+import type { Ref } from 'yummies/mobx';
 import { createEmptyDOMRect } from './dom-rect.js';
+import {
+  createElementDataController,
+  createElementDataEntry,
+  type ElementDataController,
+} from './utils/element-data.js';
 
 export interface ResizeData {
   width: number;
@@ -8,6 +13,68 @@ export interface ResizeData {
   isSupported: boolean;
 }
 
+export type ResizeDataController = ElementDataController<ResizeData>;
+
+const createResizeDataEntry = (element: Element | Ref<Element, any>) => {
+  let contentRect = createEmptyDOMRect();
+
+  return createElementDataEntry(element, {
+    createData: (reportObserved): ResizeData => ({
+      get width() {
+        reportObserved();
+        return contentRect.width;
+      },
+      get height() {
+        reportObserved();
+        return contentRect.height;
+      },
+      get rect() {
+        reportObserved();
+        return contentRect;
+      },
+      get isSupported() {
+        return typeof globalThis.ResizeObserver === 'function';
+      },
+    }),
+    observe: (target, reportChanged) => {
+      if (typeof globalThis.ResizeObserver !== 'function') {
+        return () => undefined;
+      }
+
+      let isActive = true;
+      const observer = new globalThis.ResizeObserver(([entry]) => {
+        if (entry && isActive) {
+          contentRect = entry.contentRect;
+          reportChanged();
+        }
+      });
+
+      observer.observe(target);
+      contentRect = target.getBoundingClientRect();
+      reportChanged();
+
+      return () => {
+        isActive = false;
+        observer.unobserve(target);
+        observer.disconnect();
+      };
+    },
+    onDispose: () => {
+      contentRect = createEmptyDOMRect();
+    },
+  });
+};
+
+/** Creates a controller for explicitly observing and unobserving elements. */
+export function createResizeData(target: null): ResizeDataController;
+/**
+ * Creates reactive size data for multiple elements or MobX `Ref`s.
+ *
+ * Each returned item corresponds to the element at the same index.
+ */
+export function createResizeData<TElement extends Element>(
+  elements: readonly (TElement | Ref<TElement, any>)[],
+): ResizeData[];
 /**
  * Creates reactive size data for an element or a MobX `Ref`.
  *
@@ -17,76 +84,25 @@ export interface ResizeData {
  * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/resize-data.html)
  * [MDN ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver)
  */
-export const createResizeData = <TElement extends Element>(
+export function createResizeData<TElement extends Element>(
   element: TElement | Ref<TElement, any>,
-): ResizeData => {
-  const elementRef = toRef(element);
-  let contentRect = createEmptyDOMRect();
-  let observer: ResizeObserver | undefined;
-  let observedElement: TElement | null = null;
-  let updateObservedElement: VoidFunction = () => undefined;
+): ResizeData;
+export function createResizeData<TElement extends Element>(
+  target:
+    | null
+    | TElement
+    | Ref<TElement, any>
+    | readonly (TElement | Ref<TElement, any>)[],
+): ResizeDataController | ResizeData | ResizeData[] {
+  const controller = createElementDataController(createResizeDataEntry);
 
-  const atom = createEnhancedAtom(
-    '',
-    () => {
-      updateObservedElement = () => {
-        const nextElement = elementRef.current;
+  if (target === null) {
+    return controller;
+  }
 
-        if (nextElement === observedElement) {
-          return;
-        }
+  if (Array.isArray(target)) {
+    return target.map((element) => controller.observe(element));
+  }
 
-        if (observedElement) {
-          observer?.unobserve(observedElement);
-        }
-
-        observedElement = nextElement;
-        if (observedElement) {
-          observer?.observe(observedElement);
-          const rect = observedElement.getBoundingClientRect();
-          contentRect = rect;
-          atom.reportChanged();
-        }
-      };
-
-      if (typeof globalThis.ResizeObserver === 'function') {
-        observer = new globalThis.ResizeObserver(([entry]) => {
-          if (entry) {
-            contentRect = entry.contentRect;
-            atom.reportChanged();
-          }
-        });
-        updateObservedElement();
-      }
-
-      elementRef.listeners.add(updateObservedElement);
-    },
-    () => {
-      elementRef.listeners.delete(updateObservedElement);
-      if (observedElement) {
-        observer?.unobserve(observedElement);
-      }
-      observer?.disconnect();
-      observer = undefined;
-      observedElement = null;
-    },
-  );
-
-  return {
-    get width() {
-      atom.reportObserved();
-      return contentRect.width;
-    },
-    get height() {
-      atom.reportObserved();
-      return contentRect.height;
-    },
-    get rect() {
-      atom.reportObserved();
-      return contentRect;
-    },
-    get isSupported() {
-      return typeof globalThis.ResizeObserver === 'function';
-    },
-  };
-};
+  return controller.observe(target as TElement | Ref<TElement, any>);
+}

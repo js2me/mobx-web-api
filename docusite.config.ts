@@ -37,6 +37,7 @@ export default defineConfig({
         { text: 'Color scheme', link: '/apis/color-scheme' },
         { text: 'Connection info', link: '/apis/connection-info' },
         { text: 'Network status', link: '/apis/network-status' },
+        { text: 'Navigation info', link: '/apis/navigation-info' },
         { text: 'Page visibility', link: '/apis/page-visibility' },
         { text: 'Media query', link: '/apis/media-query' },
         { text: 'Screen info', link: '/apis/screen-info' },
