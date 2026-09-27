@@ -1,5 +1,13 @@
 # mobx-web-api
 
+## 1.17.0
+
+### Minor Changes
+
+- [`2fb1b7c`](https://github.com/js2me/mobx-web-api/commit/2fb1b7c598e788ac927da54f4a41e6eb3b30a250) Thanks [@js2me](https://github.com/js2me)! - Add reactive Navigation API state and commands through `createNavigationInfo`, with request-scoped SSR snapshots.
+
+- [`2fb1b7c`](https://github.com/js2me/mobx-web-api/commit/2fb1b7c598e788ac927da54f4a41e6eb3b30a250) Thanks [@js2me](https://github.com/js2me)! - Allow `createResizeData` and `createIntersectionData` to track multiple elements from arrays or through `observe`/`unobserve` controllers.
+
 ## 1.16.1
 
 ### Patch Changes
