@@ -12,7 +12,16 @@ type NavigationEvent =
   | 'navigatesuccess'
   | 'navigateerror';
 
-type FakeNavigation = EventTarget & {
+type FakeNavigateEvent = Event & {
+  canIntercept: boolean;
+  destination: { url: string };
+  downloadRequest: string | null;
+  formData: FormData | null;
+  hashChange: boolean;
+  intercept: ReturnType<typeof vi.fn>;
+};
+
+type FakeNavigation = {
   currentEntry: NavigationEntry | null;
   entries: ReturnType<typeof vi.fn>;
   canGoBack: boolean;
@@ -22,7 +31,20 @@ type FakeNavigation = EventTarget & {
   forward: ReturnType<typeof vi.fn>;
   reload: ReturnType<typeof vi.fn>;
   traverseTo: ReturnType<typeof vi.fn>;
-  emit(event: NavigationEvent): void;
+  addEventListener: ReturnType<typeof vi.fn>;
+  removeEventListener: ReturnType<typeof vi.fn>;
+  navigateEvents: FakeNavigateEvent[];
+  nextNavigateEventOptions?: Partial<
+    Pick<
+      FakeNavigateEvent,
+      | 'canIntercept'
+      | 'destination'
+      | 'downloadRequest'
+      | 'formData'
+      | 'hashChange'
+    > & { defaultPrevented?: boolean }
+  >;
+  emit(event: NavigationEvent, payload?: Event): void;
 };
 
 const entry = (key: string, index: number): NavigationEntry => ({
@@ -35,7 +57,7 @@ const entry = (key: string, index: number): NavigationEntry => ({
 });
 
 const createFakeNavigation = (): FakeNavigation => {
-  const listeners: Record<NavigationEvent, Set<() => void>> = {
+  const listeners: Record<NavigationEvent, Set<(event: Event) => void>> = {
     currententrychange: new Set(),
     navigate: new Set(),
     navigatesuccess: new Set(),
@@ -45,34 +67,62 @@ const createFakeNavigation = (): FakeNavigation => {
     committed: Promise.resolve(entry('next', 1)),
     finished: Promise.resolve(entry('next', 1)),
   };
-  const fakeNavigation = {
+  const fakeNavigation: FakeNavigation = {
     currentEntry: entry('current', 0),
     entries: vi.fn(() => [entry('current', 0)]),
     canGoBack: false,
     canGoForward: true,
-    navigate: vi.fn(() => result),
+    navigateEvents: [],
+    navigate: vi.fn((url: string | URL) => {
+      const { defaultPrevented, ...eventOptions } =
+        fakeNavigation.nextNavigateEventOptions ?? {};
+      const targetURL = new URL(
+        url,
+        document.baseURI || fakeNavigation.currentEntry?.url,
+      );
+      const event = Object.assign(new Event('navigate', { cancelable: true }), {
+        canIntercept: true,
+        destination: { url: targetURL.href },
+        downloadRequest: null,
+        formData: null,
+        hashChange: false,
+        intercept: vi.fn(),
+        ...eventOptions,
+      }) as FakeNavigateEvent;
+      if (defaultPrevented) {
+        event.preventDefault();
+      }
+      fakeNavigation.nextNavigateEventOptions = undefined;
+      fakeNavigation.navigateEvents.push(event);
+      fakeNavigation.emit('navigate', event);
+      return result;
+    }),
     back: vi.fn(() => result),
     forward: vi.fn(() => result),
     reload: vi.fn(() => result),
     traverseTo: vi.fn(() => result),
-    addEventListener: vi.fn((event: string, listener: () => void) => {
-      if (event in listeners) {
-        listeners[event as NavigationEvent].add(listener);
-      }
-    }),
-    removeEventListener: vi.fn((event: string, listener: () => void) => {
-      if (event in listeners) {
-        listeners[event as NavigationEvent].delete(listener);
-      }
-    }),
-    emit(event: NavigationEvent) {
+    addEventListener: vi.fn(
+      (event: string, listener: (event: Event) => void) => {
+        if (event in listeners) {
+          listeners[event as NavigationEvent].add(listener);
+        }
+      },
+    ),
+    removeEventListener: vi.fn(
+      (event: string, listener: (event: Event) => void) => {
+        if (event in listeners) {
+          listeners[event as NavigationEvent].delete(listener);
+        }
+      },
+    ),
+    emit(event: NavigationEvent, payload: Event = new Event(event)) {
       for (const listener of listeners[event]) {
-        listener();
+        listener(payload);
       }
     },
   };
 
-  return fakeNavigation as unknown as FakeNavigation;
+  return fakeNavigation;
 };
 
 const installNavigation = (navigation: FakeNavigation) => {
@@ -84,6 +134,7 @@ const installNavigation = (navigation: FakeNavigation) => {
 
 describe('navigationInfo', () => {
   let navigationInfo: NavigationInfo;
+  const originalBaseURI = Object.getOwnPropertyDescriptor(document, 'baseURI');
   const originalNavigation = Object.getOwnPropertyDescriptor(
     globalThis,
     'navigation',
@@ -91,10 +142,20 @@ describe('navigationInfo', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.defineProperty(document, 'baseURI', {
+      configurable: true,
+      value: 'https://example.com/current',
+    });
     navigationInfo = createNavigationInfo();
   });
 
   afterEach(() => {
+    if (originalBaseURI) {
+      Object.defineProperty(document, 'baseURI', originalBaseURI);
+    } else {
+      Reflect.deleteProperty(document, 'baseURI');
+    }
+
     if (originalNavigation) {
       Object.defineProperty(globalThis, 'navigation', originalNavigation);
     } else {
@@ -420,6 +481,277 @@ describe('navigationInfo', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith(
       'https://example.com/settings?old=1#section',
     );
+  });
+
+  it('intercepts same-origin navigations with a lazily installed dispatcher', async () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+
+    navigationInfo.navigate('/internal/nova/products');
+
+    const event = navigation.navigateEvents[0];
+    expect(event?.intercept).toHaveBeenCalledExactlyOnceWith({
+      handler: expect.any(Function),
+    });
+    expect(navigation.addEventListener).toHaveBeenCalledExactlyOnceWith(
+      'navigate',
+      expect.any(Function),
+      true,
+    );
+    expect(navigation.removeEventListener).not.toHaveBeenCalled();
+
+    navigationInfo.navigate('/settings');
+    expect(navigation.addEventListener).toHaveBeenCalledOnce();
+    expect(navigation.navigateEvents[1]?.intercept).toHaveBeenCalledOnce();
+    await expect(
+      navigation.navigate.mock.results[0]?.value.finished,
+    ).resolves.toBeDefined();
+  });
+
+  it('intercepts the final URL after applying the query option', () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+
+    navigationInfo.navigate('/products?old=1', { query: { page: 2 } });
+
+    expect(navigation.navigateEvents[0]?.destination.url).toBe(
+      'https://example.com/products?page=2',
+    );
+    expect(navigation.navigateEvents[0]?.intercept).toHaveBeenCalledOnce();
+  });
+
+  it('does not intercept when the instance has mpa enabled', () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+    const fullNavigationInfo = createNavigationInfo({ mpa: true });
+
+    fullNavigationInfo.navigate('/products', {
+      history: 'replace',
+      query: { page: 2 },
+    });
+
+    expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(
+      'https://example.com/products?page=2',
+      { history: 'replace' },
+    );
+    expect(navigation.navigateEvents[0]?.intercept).not.toHaveBeenCalled();
+    expect(navigation.addEventListener).not.toHaveBeenCalled();
+
+    fullNavigationInfo.navigate('/settings');
+
+    expect(navigation.navigateEvents[1]?.intercept).not.toHaveBeenCalled();
+    expect(navigation.addEventListener).not.toHaveBeenCalled();
+  });
+
+  it('does not intercept a navigation canceled by another listener', () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+    navigation.nextNavigateEventOptions = { defaultPrevented: true };
+
+    navigationInfo.navigate('/products');
+
+    expect(navigation.navigateEvents[0]?.intercept).not.toHaveBeenCalled();
+  });
+
+  it('intercepts an event only once when two instances navigate to the same URL', () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+    const second = createNavigationInfo();
+    navigation.navigate.mockImplementationOnce((url: string) => {
+      second.navigate(url);
+      return {
+        committed: Promise.resolve(entry('next', 1)),
+        finished: Promise.resolve(entry('next', 1)),
+      };
+    });
+
+    navigationInfo.navigate('/products');
+
+    expect(navigation.navigateEvents[0]?.intercept).toHaveBeenCalledOnce();
+    expect(navigation.addEventListener).toHaveBeenCalledTimes(2);
+    expect(navigation.removeEventListener).not.toHaveBeenCalled();
+  });
+
+  it('destroy releases only its own SPA listener', () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+    const first = createNavigationInfo();
+    const second = createNavigationInfo();
+
+    first.navigate('/first');
+    second.navigate('/second');
+
+    expect(navigation.addEventListener).toHaveBeenCalledTimes(2);
+
+    first.destroy();
+    expect(navigation.removeEventListener).toHaveBeenCalledExactlyOnceWith(
+      'navigate',
+      expect.any(Function),
+      true,
+    );
+
+    second.navigate('/still-active');
+    expect(navigation.navigateEvents[2]?.intercept).toHaveBeenCalledOnce();
+
+    second.destroy();
+    expect(navigation.removeEventListener).toHaveBeenCalledTimes(2);
+
+    second.destroy();
+    expect(navigation.removeEventListener).toHaveBeenCalledTimes(2);
+    expect(second.navigate('/again')).toBeDefined();
+    expect(navigation.addEventListener).toHaveBeenCalledTimes(3);
+    expect(navigation.navigateEvents[3]?.intercept).toHaveBeenCalledOnce();
+    expect(second.back()).toBeDefined();
+    expect(second.isSupported).toBe(true);
+    expect(second.currentEntry.key).toBe('current');
+
+    second.destroy();
+    expect(navigation.removeEventListener).toHaveBeenCalledTimes(3);
+  });
+
+  it('destroy detaches the reactive current-entry listener', () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+    const info = createNavigationInfo();
+    const onPathChange = vi.fn();
+    const dispose = reaction(() => info.path, onPathChange);
+
+    expect(navigation.addEventListener).toHaveBeenCalledWith(
+      'currententrychange',
+      expect.any(Function),
+    );
+
+    info.destroy();
+
+    expect(navigation.removeEventListener).toHaveBeenCalledWith(
+      'currententrychange',
+      expect.any(Function),
+    );
+    expect(info.path).toBe('/current');
+    expect(onPathChange).not.toHaveBeenCalled();
+
+    navigation.currentEntry = entry('after-destroy', 1);
+    navigation.emit('currententrychange');
+    expect(onPathChange).not.toHaveBeenCalled();
+
+    dispose();
+    expect(info.path).toBe('/after-destroy');
+  });
+
+  it('keeps one dispatcher and clears pending targets when native navigate throws', () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+    navigation.navigate.mockImplementationOnce(() => {
+      throw new Error('Navigation failed');
+    });
+
+    expect(() => navigationInfo.navigate('/products')).toThrow(
+      'Navigation failed',
+    );
+    expect(navigation.addEventListener).toHaveBeenCalledOnce();
+    expect(navigation.removeEventListener).not.toHaveBeenCalled();
+
+    navigation.navigate('/products');
+    expect(navigation.navigateEvents[0]?.intercept).not.toHaveBeenCalled();
+  });
+
+  it('does not keep a pending target while a cross-document result stays pending', () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+    const finished = new Promise<NavigationEntry>(() => undefined);
+    navigation.navigate.mockImplementationOnce(() => ({
+      committed: finished,
+      finished,
+    }));
+
+    navigationInfo.navigate('https://other.example/products');
+
+    expect(navigation.addEventListener).toHaveBeenCalledOnce();
+    expect(navigation.removeEventListener).not.toHaveBeenCalled();
+
+    navigation.navigate('/unrelated');
+    expect(navigation.navigateEvents[0]?.intercept).not.toHaveBeenCalled();
+  });
+
+  it('passes invalid URLs to native navigate instead of throwing while parsing', () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+    const result = {
+      committed: Promise.resolve(entry('next', 1)),
+      finished: Promise.resolve(entry('next', 1)),
+    };
+    navigation.navigate.mockReturnValueOnce(result);
+
+    expect(navigationInfo.navigate('https://[invalid')).toBe(result);
+    expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(
+      'https://[invalid',
+    );
+    expect(navigation.addEventListener).not.toHaveBeenCalled();
+  });
+
+  it('resolves relative paths against document.baseURI', () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+    Object.defineProperty(document, 'baseURI', {
+      configurable: true,
+      value: 'https://example.com/app/',
+    });
+
+    navigationInfo.navigate('products', { query: { view: 'all' } });
+
+    expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(
+      'https://example.com/app/products?view=all',
+      {},
+    );
+    expect(navigation.navigateEvents[0]?.intercept).toHaveBeenCalledOnce();
+  });
+
+  it('leaves navigations the browser cannot handle as SPA unintercepted', () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+    navigation.nextNavigateEventOptions = { canIntercept: false };
+
+    navigationInfo.navigate('/external-target');
+
+    expect(navigation.navigateEvents[0]?.intercept).not.toHaveBeenCalled();
+    expect(navigation.addEventListener).toHaveBeenCalledExactlyOnceWith(
+      'navigate',
+      expect.any(Function),
+      true,
+    );
+    expect(navigation.removeEventListener).not.toHaveBeenCalled();
+  });
+
+  it('does not intercept a different destination while waiting for its navigation', () => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+    navigation.nextNavigateEventOptions = {
+      destination: { url: 'https://example.com/unrelated' },
+    };
+
+    navigationInfo.navigate('/products');
+
+    expect(navigation.navigateEvents[0]?.intercept).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { name: 'fragment-only change', options: { hashChange: true } },
+    { name: 'download', options: { downloadRequest: 'report.csv' } },
+    { name: 'form submission', options: { formData: new FormData() } },
+  ])('leaves $name to the browser', ({ options }) => {
+    const navigation = createFakeNavigation();
+    installNavigation(navigation);
+    navigation.nextNavigateEventOptions = options;
+
+    navigationInfo.navigate('/products');
+
+    expect(navigation.navigateEvents[0]?.intercept).not.toHaveBeenCalled();
+    expect(navigation.addEventListener).toHaveBeenCalledExactlyOnceWith(
+      'navigate',
+      expect.any(Function),
+      true,
+    );
+    expect(navigation.removeEventListener).not.toHaveBeenCalled();
   });
 
   it('accepts query parameters as the first argument', () => {

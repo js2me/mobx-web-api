@@ -53,10 +53,20 @@ type NativeNavigation = EventTarget & {
   traverseTo(key: string, options?: NavigationOptions): NavigationResult;
 };
 
+type NativeNavigateEvent = Event & {
+  canIntercept: boolean;
+  destination: { url: string };
+  downloadRequest: string | null;
+  formData: FormData | null;
+  hashChange: boolean;
+  intercept(options?: { handler?: () => void | Promise<void> }): void;
+};
+
 /**
  * Reactive state based on the browser Navigation API.
  *
- * This is a passive wrapper: it does not intercept navigations or act as a router.
+ * Programmatic same-origin navigations made with `navigate()` are intercepted
+ * to keep the current document alive. This API does not implement route matching.
  *
  * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/navigation-info.html)
  * [MDN Navigation API](https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API)
@@ -79,7 +89,11 @@ export interface NavigationInfo {
   readonly entries: readonly NavigationEntry[];
   readonly canGoBack: boolean;
   readonly canGoForward: boolean;
-  /** Pass a query object, null, or an empty string to use the current URL. */
+  /**
+   * Intercepts interceptable same-origin programmatic navigations to keep the
+   * current document alive. Pass a query object, null, or an empty string to
+   * use the current URL.
+   */
   navigate(
     url: string | URL | null | NavigationQuery,
     options?: NavigationNavigateOptions,
@@ -91,12 +105,16 @@ export interface NavigationInfo {
     key: string,
     options?: NavigationOptions,
   ): NavigationResult | undefined;
+  /** Unsubscribe from browser events; future use can subscribe again. */
+  destroy(): void;
   _atom?: IEnhancedAtom;
 }
 
 export interface NavigationInfoOptions {
   /** Entry to expose when the browser Navigation API is unavailable (e.g. SSR). */
   ssrSnapshot?: NavigationEntry | null;
+  /** Enable regular full-document navigations instead of SPA interception. */
+  mpa?: boolean;
 }
 
 // Keep the global object, not its navigation value: SSR hydration may add it later.
@@ -118,6 +136,9 @@ const toSearchParams = (query: NavigationQuery): URLSearchParams => {
   return params;
 };
 
+// Another instance can observe the same event during a nested navigation.
+const interceptedEvents = new WeakSet<Event>();
+
 /**
  * Create an independent reactive Navigation API state for MobX consumers.
  *
@@ -126,7 +147,32 @@ const toSearchParams = (query: NavigationQuery): URLSearchParams => {
  */
 export const createNavigationInfo = ({
   ssrSnapshot = null,
+  mpa = false,
 }: NavigationInfoOptions = {}): NavigationInfo => {
+  let spaNavigation: NativeNavigation | undefined;
+  let pendingURL: string | undefined;
+  let stopObservingNavigation: (() => void) | undefined;
+
+  const onNavigate = (event: Event) => {
+    const navigateEvent = event as NativeNavigateEvent;
+
+    if (
+      !pendingURL ||
+      interceptedEvents.has(event) ||
+      event.defaultPrevented ||
+      !navigateEvent.canIntercept ||
+      navigateEvent.destination.url !== pendingURL ||
+      navigateEvent.downloadRequest !== null ||
+      navigateEvent.formData !== null ||
+      navigateEvent.hashChange
+    ) {
+      return;
+    }
+
+    navigateEvent.intercept({ handler: () => undefined });
+    interceptedEvents.add(event);
+  };
+
   const fallbackEntry: NavigationEntry = ssrSnapshot ?? {
     id: '',
     key: '',
@@ -151,12 +197,16 @@ export const createNavigationInfo = ({
         process.env.NODE_ENV === 'production' ? '' : 'navigationInfo',
         (atom) => {
           navigation.addEventListener('currententrychange', atom.reportChanged);
+          stopObservingNavigation = () => {
+            navigation.removeEventListener(
+              'currententrychange',
+              atom.reportChanged,
+            );
+          };
         },
-        (atom) => {
-          navigation.removeEventListener(
-            'currententrychange',
-            atom.reportChanged,
-          );
+        () => {
+          stopObservingNavigation?.();
+          stopObservingNavigation = undefined;
         },
       );
     }
@@ -238,16 +288,50 @@ export const createNavigationInfo = ({
           return undefined;
         }
 
-        if (query === undefined) {
-          return options
-            ? navigation.navigate(targetURL, nativeOptions)
-            : navigation.navigate(targetURL);
+        let navigationURL: string | URL = targetURL;
+        const documentBase = webGlobal.document?.baseURI;
+        const baseURL =
+          documentBase && URL.canParse(targetURL, documentBase)
+            ? documentBase
+            : currentURL;
+
+        if (query !== undefined) {
+          const target = new URL(targetURL, baseURL);
+          target.search = toSearchParams(query).toString();
+          navigationURL = target.href;
         }
 
-        const target = new URL(targetURL, currentURL);
-        target.search = toSearchParams(query).toString();
+        const start = () => {
+          if (options || query !== undefined) {
+            return navigation.navigate(navigationURL, nativeOptions);
+          }
 
-        return navigation.navigate(target.href, nativeOptions);
+          return navigation.navigate(navigationURL);
+        };
+
+        if (mpa) {
+          return start();
+        }
+
+        // Invalid URLs are reported by the native navigate() result.
+        if (!URL.canParse(navigationURL, baseURL)) {
+          return start();
+        }
+
+        if (spaNavigation !== navigation) {
+          spaNavigation?.removeEventListener('navigate', onNavigate, true);
+          navigation.addEventListener('navigate', onNavigate, true);
+          spaNavigation = navigation;
+        }
+
+        const previousURL = pendingURL;
+        pendingURL = new URL(navigationURL, baseURL).href;
+
+        try {
+          return start();
+        } finally {
+          pendingURL = previousURL;
+        }
       },
       back(options) {
         return webGlobal.navigation?.back(options);
@@ -260,6 +344,13 @@ export const createNavigationInfo = ({
       },
       traverseTo(key, options) {
         return webGlobal.navigation?.traverseTo(key, options);
+      },
+      destroy() {
+        spaNavigation?.removeEventListener('navigate', onNavigate, true);
+        spaNavigation = undefined;
+        pendingURL = undefined;
+        stopObservingNavigation?.();
+        stopObservingNavigation = undefined;
       },
     },
     {

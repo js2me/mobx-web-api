@@ -58,8 +58,40 @@ describe('createNavigationInfo in Node (SSR)', () => {
   it('navigates to an absolute URL with query without a location base', () => {
     Reflect.deleteProperty(globalThis, 'location');
     const navigate = vi.fn();
+    const listeners = new Set<(event: Event) => void>();
+    const navigation = {
+      currentEntry: null,
+      navigate: vi.fn((url: string | URL, options?: unknown) => {
+        navigate(url, options);
+        const event = Object.assign(new Event('navigate'), {
+          canIntercept: true,
+          destination: { url: String(url) },
+          downloadRequest: null,
+          formData: null,
+          hashChange: false,
+          intercept: vi.fn(),
+        });
+        listeners.forEach((listener) => {
+          listener(event);
+        });
+        return {
+          committed: Promise.resolve(undefined),
+          finished: Promise.resolve(undefined),
+        };
+      }),
+      addEventListener: vi.fn(
+        (_type: string, listener: (event: Event) => void) => {
+          listeners.add(listener);
+        },
+      ),
+      removeEventListener: vi.fn(
+        (_type: string, listener: (event: Event) => void) => {
+          listeners.delete(listener);
+        },
+      ),
+    };
     Object.defineProperty(globalThis, 'navigation', {
-      value: { currentEntry: null, navigate },
+      value: navigation,
       configurable: true,
     });
 
@@ -68,9 +100,11 @@ describe('createNavigationInfo in Node (SSR)', () => {
       query: { tab: 'profile' },
     });
 
-    expect(navigate).toHaveBeenCalledExactlyOnceWith(
+    expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith(
       'https://example.com/settings?tab=profile#section',
       { history: 'replace' },
     );
+    expect(navigation.addEventListener).toHaveBeenCalledOnce();
+    expect(navigation.removeEventListener).not.toHaveBeenCalled();
   });
 });
