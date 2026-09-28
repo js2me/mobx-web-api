@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.18.0
+
+### Minor Changes
+
+- [`1f1986c`](https://github.com/js2me/mobx-web-api/commit/1f1986cc7c3b10b1573f0da703a6df0bf0ed664b) Thanks [@js2me](https://github.com/js2me)! - Support same-document navigation through `createNavigationInfo` by default, with an `mpa` option for full document navigations and a `destroy()` method to remove browser listeners.
+
 ## 1.17.0
 
 ### Minor Changes
