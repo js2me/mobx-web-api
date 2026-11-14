@@ -46,7 +46,7 @@ All languages from user's system
 [MDN Reference](https://developer.mozilla.org/docs/Web/API/Navigator/languages)  
 
 
-#### `acceptLanguageHeader` <Badge type="info" text="observable.ref" />   
+#### `acceptLanguageHeader` <Badge type="info" text="ref observable" />
 
 Allows to set string value from `Accept-Language` header of request. It can be helpful for SSR
 

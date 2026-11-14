@@ -1,5 +1,9 @@
-import { computed, makeObservable } from 'mobx';
-import { createEnhancedAtom, type IEnhancedAtom } from 'yummies/mobx';
+import {
+  annotation,
+  applyObservable,
+  createEnhancedAtom,
+  type IEnhancedAtom,
+} from 'yummies/mobx';
 
 export interface MatchMediaTracker {
   matches: boolean;
@@ -130,50 +134,47 @@ export interface MediaQueryInfo {
  * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/media-query.html)
  * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/Window/matchMedia)
  */
-export const mediaQuery = makeObservable<MediaQueryInfo>(
-  {
-    get sizes() {
-      if (!this._atom) {
-        this._atom = createEnhancedAtom(
-          process.env.NODE_ENV === 'production' ? '' : 'mediaQuery_sizes',
-          (atom) => {
-            globalThis.addEventListener?.('resize', atom.reportChanged);
-          },
-          (atom) => {
-            globalThis.removeEventListener?.('resize', atom.reportChanged);
-          },
-        );
-      }
+export const mediaQuery: MediaQueryInfo = {
+  get sizes() {
+    if (!this._atom) {
+      this._atom = createEnhancedAtom(
+        process.env.NODE_ENV === 'production' ? '' : 'mediaQuery_sizes',
+        (atom) => {
+          globalThis.addEventListener?.('resize', atom.reportChanged);
+        },
+        (atom) => {
+          globalThis.removeEventListener?.('resize', atom.reportChanged);
+        },
+      );
+    }
 
-      this._atom.reportObserved();
+    this._atom.reportObserved();
 
-      return {
-        inner: {
-          width: globalThis.innerWidth ?? 0,
-          height: globalThis.innerHeight ?? 0,
-        },
-        outer: {
-          width: globalThis.outerWidth ?? 0,
-          height: globalThis.outerHeight ?? 0,
-        },
-        client: {
-          width: globalThis.document?.documentElement?.clientWidth ?? 0,
-          height: globalThis.document?.documentElement?.clientHeight ?? 0,
-        },
-        offset: {
-          width: globalThis.document?.documentElement?.offsetWidth ?? 0,
-          height: globalThis.document?.documentElement?.offsetHeight ?? 0,
-        },
-      };
-    },
-    track(query: string) {
-      return matchMediaTrackerFactory.create(query);
-    },
-    match(query: string) {
-      return matchMediaTrackerFactory.create(query).matches;
-    },
+    return {
+      inner: {
+        width: globalThis.innerWidth ?? 0,
+        height: globalThis.innerHeight ?? 0,
+      },
+      outer: {
+        width: globalThis.outerWidth ?? 0,
+        height: globalThis.outerHeight ?? 0,
+      },
+      client: {
+        width: globalThis.document?.documentElement?.clientWidth ?? 0,
+        height: globalThis.document?.documentElement?.clientHeight ?? 0,
+      },
+      offset: {
+        width: globalThis.document?.documentElement?.offsetWidth ?? 0,
+        height: globalThis.document?.documentElement?.offsetHeight ?? 0,
+      },
+    };
   },
-  {
-    sizes: computed.struct,
+  track(query: string) {
+    return matchMediaTrackerFactory.create(query);
   },
-);
+  match(query: string) {
+    return matchMediaTrackerFactory.create(query).matches;
+  },
+};
+
+applyObservable(mediaQuery, [[annotation.computed('struct'), 'sizes']]);

@@ -1,5 +1,10 @@
-import { makeObservable, observable, runInAction } from 'mobx';
-import { createEnhancedAtom, type IEnhancedAtom } from 'yummies/mobx';
+import { runInAction } from 'mobx';
+import {
+  annotation,
+  applyObservable,
+  createEnhancedAtom,
+  type IEnhancedAtom,
+} from 'yummies/mobx';
 
 type IPermissionAtom = IEnhancedAtom<{
   permissionStatus?: PermissionStatus;
@@ -47,6 +52,11 @@ const getOrCreatePermissionAtom = (
   name: PermissionName,
 ): IPermissionAtom => {
   if (!info._atom) {
+    const meta: IPermissionAtom['meta'] = {
+      retry: () => requestPermission(name, info._atom!),
+    };
+    applyObservable(meta, [[annotation.observable('ref'), 'error']]);
+
     info._atom = createEnhancedAtom<IPermissionAtom['meta']>(
       process.env.NODE_ENV === 'production' ? '' : `${name}_permission`,
       (atom) => {
@@ -60,14 +70,7 @@ const getOrCreatePermissionAtom = (
           'change',
           atom.reportChanged,
         ),
-      makeObservable<IPermissionAtom['meta']>(
-        {
-          retry: () => requestPermission(name, info._atom!),
-        },
-        {
-          error: observable.ref,
-        },
-      ),
+      meta,
     );
   }
 

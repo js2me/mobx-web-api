@@ -1,11 +1,5 @@
-import {
-  action,
-  computed,
-  makeObservable,
-  observable,
-  onBecomeObserved,
-  onBecomeUnobserved,
-} from 'mobx';
+import { action, onBecomeObserved, onBecomeUnobserved } from 'mobx';
+import { annotation, applyObservable } from 'yummies/mobx';
 import type { Maybe } from 'yummies/types';
 import { type PermissionInfo, permissions } from './permissions.js';
 
@@ -44,10 +38,10 @@ export class BaseGeolocationProvider implements GeolocationProvider {
   };
 
   constructor(private positionOptions?: PositionOptions) {
-    makeObservable(this, {
-      position: observable.deep,
-      error: computed.struct,
-    });
+    applyObservable(this, [
+      [annotation.observable('deep'), 'position'],
+      [annotation.computed('struct'), 'error'],
+    ]);
 
     onBecomeObserved(this, 'position', () => {
       this.activate();
@@ -114,20 +108,17 @@ export interface GeolocationInfo {
  * [**Documentation**](https://js2me.github.io/mobx-web-api/apis/geolocation.html)
  * [MDN Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API)
  */
-export const geolocation = makeObservable<GeolocationInfo>(
-  {
-    get permission() {
-      return permissions.geolocation;
-    },
-    get position(): GeolocationPosition {
-      if (!this.provider) {
-        this.provider = new BaseGeolocationProvider();
-      }
+export const geolocation: GeolocationInfo = {
+  get permission() {
+    return permissions.geolocation;
+  },
+  get position(): GeolocationPosition {
+    if (!this.provider) {
+      this.provider = new BaseGeolocationProvider();
+    }
 
-      return this.provider.position;
-    },
+    return this.provider.position;
   },
-  {
-    position: computed.struct,
-  },
-);
+};
+
+applyObservable(geolocation, [[annotation.computed('struct'), 'position']]);
