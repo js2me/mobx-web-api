@@ -1,8 +1,9 @@
+import * as annotation from 'yummies/mobx';
 import {
-  annotation,
   applyObservable,
   createEnhancedAtom,
   type IEnhancedAtom,
+  type ObservableAnnotationsArray,
 } from 'yummies/mobx';
 
 export interface MatchMediaTracker {
@@ -128,6 +129,10 @@ export interface MediaQueryInfo {
   _atom?: IEnhancedAtom;
 }
 
+const annotations: ObservableAnnotationsArray<MediaQueryInfo> = [
+  [annotation.computedStruct, 'sizes'],
+];
+
 /**
  * Reactive media query API for MobX consumers.
  *
@@ -177,4 +182,4 @@ export const mediaQuery: MediaQueryInfo = {
   },
 };
 
-applyObservable(mediaQuery, [[annotation.computed('struct'), 'sizes']]);
+applyObservable(mediaQuery, annotations);

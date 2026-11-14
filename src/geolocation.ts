@@ -1,5 +1,6 @@
 import { action, onBecomeObserved, onBecomeUnobserved } from 'mobx';
-import { annotation, applyObservable } from 'yummies/mobx';
+import * as annotation from 'yummies/mobx';
+import { applyObservable, type ObservableAnnotationsArray } from 'yummies/mobx';
 import type { Maybe } from 'yummies/types';
 import { type PermissionInfo, permissions } from './permissions.js';
 
@@ -21,6 +22,11 @@ export type GeolocationProvider = {
   deactivate(): void;
 };
 
+const annotations: ObservableAnnotationsArray<BaseGeolocationProvider> = [
+  [annotation.observableDeep, 'position'],
+  [annotation.computedStruct, 'error'],
+];
+
 export class BaseGeolocationProvider implements GeolocationProvider {
   private watchId: Maybe<number>;
 
@@ -38,10 +44,7 @@ export class BaseGeolocationProvider implements GeolocationProvider {
   };
 
   constructor(private positionOptions?: PositionOptions) {
-    applyObservable(this, [
-      [annotation.observable('deep'), 'position'],
-      [annotation.computed('struct'), 'error'],
-    ]);
+    applyObservable(this, annotations);
 
     onBecomeObserved(this, 'position', () => {
       this.activate();
@@ -121,4 +124,4 @@ export const geolocation: GeolocationInfo = {
   },
 };
 
-applyObservable(geolocation, [[annotation.computed('struct'), 'position']]);
+applyObservable(geolocation, [[annotation.computedStruct, 'position']]);

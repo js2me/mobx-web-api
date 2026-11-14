@@ -1,8 +1,9 @@
+import * as annotation from 'yummies/mobx';
 import {
-  annotation,
   applyObservable,
   createEnhancedAtom,
   type IEnhancedAtom,
+  type ObservableAnnotationsArray,
 } from 'yummies/mobx';
 
 /** A session-history entry supplied by the Navigation API. */
@@ -120,6 +121,22 @@ export interface NavigationInfoOptions {
   /** Enable regular full-document navigations instead of SPA interception. */
   mpa?: boolean;
 }
+
+const annotations: ObservableAnnotationsArray<NavigationInfo> = [
+  [
+    annotation.computed,
+    'currentEntry',
+    'url',
+    'path',
+    'state',
+    'query',
+    'queryData',
+    'hash',
+    'entries',
+    'canGoBack',
+    'canGoForward',
+  ],
+];
 
 // Keep the global object, not its navigation value: SSR hydration may add it later.
 const webGlobal = globalThis as typeof globalThis & {
@@ -357,21 +374,7 @@ export const createNavigationInfo = ({
     },
   };
 
-  applyObservable(navigationInfo, [
-    [
-      annotation.computed(),
-      'currentEntry',
-      'url',
-      'path',
-      'state',
-      'query',
-      'queryData',
-      'hash',
-      'entries',
-      'canGoBack',
-      'canGoForward',
-    ],
-  ]);
+  applyObservable(navigationInfo, annotations);
 
   return navigationInfo;
 };

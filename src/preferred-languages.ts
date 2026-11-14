@@ -1,9 +1,10 @@
 import { computed, type IComputedValue } from 'mobx';
+import * as annotation from 'yummies/mobx';
 import {
-  annotation,
   applyObservable,
   createEnhancedAtom,
   type IEnhancedAtom,
+  type ObservableAnnotationsArray,
 } from 'yummies/mobx';
 import type { Maybe } from 'yummies/types';
 
@@ -36,6 +37,10 @@ const keysMapping = [
   keyof PreferredLanguages,
   keyof globalThis.NavigatorLanguage,
 ][];
+
+const annotations: ObservableAnnotationsArray<PreferredLanguages> = [
+  [annotation.observableRef, 'acceptLanguageHeader'],
+];
 
 /**
  * Reactive preferred languages information for MobX consumers.
@@ -104,6 +109,4 @@ export const preferredLanguages = keysMapping.reduce(
   } as PreferredLanguages,
 );
 
-applyObservable(preferredLanguages, [
-  [annotation.observable('ref'), 'acceptLanguageHeader'],
-]);
+applyObservable(preferredLanguages, annotations);
