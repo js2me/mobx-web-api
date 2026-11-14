@@ -1,5 +1,5 @@
+import * as annotation from 'yummies/mobx';
 import {
-  annotation,
   applyObservable,
   createEnhancedAtom,
   type IEnhancedAtom,

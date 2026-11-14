@@ -1,9 +1,6 @@
 import { action, onBecomeObserved, onBecomeUnobserved } from 'mobx';
-import {
-  annotation,
-  applyObservable,
-  type ObservableAnnotationsArray,
-} from 'yummies/mobx';
+import * as annotation from 'yummies/mobx';
+import { applyObservable, type ObservableAnnotationsArray } from 'yummies/mobx';
 import type { Maybe } from 'yummies/types';
 import { type PermissionInfo, permissions } from './permissions.js';
 
