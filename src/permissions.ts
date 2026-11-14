@@ -4,6 +4,7 @@ import {
   applyObservable,
   createEnhancedAtom,
   type IEnhancedAtom,
+  type ObservableAnnotationsArray,
 } from 'yummies/mobx';
 
 type IPermissionAtom = IEnhancedAtom<{
@@ -11,6 +12,10 @@ type IPermissionAtom = IEnhancedAtom<{
   retry(): Promise<void>;
   error?: unknown;
 }>;
+
+const permissionMetaAnnotations: ObservableAnnotationsArray<
+  IPermissionAtom['meta']
+> = [[annotation.observable('ref'), 'error']];
 
 export interface PermissionInfo {
   _atom?: IPermissionAtom;
@@ -55,7 +60,7 @@ const getOrCreatePermissionAtom = (
     const meta: IPermissionAtom['meta'] = {
       retry: () => requestPermission(name, info._atom!),
     };
-    applyObservable(meta, [[annotation.observable('ref'), 'error']]);
+    applyObservable(meta, permissionMetaAnnotations);
 
     info._atom = createEnhancedAtom<IPermissionAtom['meta']>(
       process.env.NODE_ENV === 'production' ? '' : `${name}_permission`,
