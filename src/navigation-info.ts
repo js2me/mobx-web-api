@@ -1,5 +1,9 @@
-import { computed, makeObservable } from 'mobx';
-import { createEnhancedAtom, type IEnhancedAtom } from 'yummies/mobx';
+import {
+  annotation,
+  applyObservable,
+  createEnhancedAtom,
+  type IEnhancedAtom,
+} from 'yummies/mobx';
 
 /** A session-history entry supplied by the Navigation API. */
 export interface NavigationEntry {
@@ -215,157 +219,159 @@ export const createNavigationInfo = ({
     return read(navigation);
   };
 
-  const navigationInfo: NavigationInfo = makeObservable<NavigationInfo>(
-    {
-      get isSupported() {
-        const navigation = webGlobal.navigation;
+  const navigationInfo: NavigationInfo = {
+    get isSupported() {
+      const navigation = webGlobal.navigation;
 
-        return Boolean(
-          navigation &&
-            typeof navigation.entries === 'function' &&
-            typeof navigation.navigate === 'function',
-        );
-      },
-      get currentEntry() {
-        return observe(
-          (navigation) => navigation.currentEntry ?? fallbackEntry,
-          fallbackEntry,
-        );
-      },
-      get url() {
-        const url = this.currentEntry.url;
-        return url ? new URL(url) : null;
-      },
-      get path() {
-        return this.url?.pathname ?? '';
-      },
-      get state() {
-        return observe(
-          (navigation) => (navigation.currentEntry ?? fallbackEntry).getState(),
-          fallbackEntry.getState(),
-        );
-      },
-      get query() {
-        return this.url?.search ?? '';
-      },
-      get queryData() {
-        return Object.fromEntries(this.url?.searchParams ?? []);
-      },
-      get hash() {
-        return this.url?.hash ?? '';
-      },
-      get entries() {
-        return observe((navigation) => navigation.entries(), []);
-      },
-      get canGoBack() {
-        return observe((navigation) => navigation.canGoBack, false);
-      },
-      get canGoForward() {
-        return observe((navigation) => navigation.canGoForward, false);
-      },
-      navigate(url, options) {
-        const navigation = webGlobal.navigation;
+      return Boolean(
+        navigation &&
+          typeof navigation.entries === 'function' &&
+          typeof navigation.navigate === 'function',
+      );
+    },
+    get currentEntry() {
+      return observe(
+        (navigation) => navigation.currentEntry ?? fallbackEntry,
+        fallbackEntry,
+      );
+    },
+    get url() {
+      const url = this.currentEntry.url;
+      return url ? new URL(url) : null;
+    },
+    get path() {
+      return this.url?.pathname ?? '';
+    },
+    get state() {
+      return observe(
+        (navigation) => (navigation.currentEntry ?? fallbackEntry).getState(),
+        fallbackEntry.getState(),
+      );
+    },
+    get query() {
+      return this.url?.search ?? '';
+    },
+    get queryData() {
+      return Object.fromEntries(this.url?.searchParams ?? []);
+    },
+    get hash() {
+      return this.url?.hash ?? '';
+    },
+    get entries() {
+      return observe((navigation) => navigation.entries(), []);
+    },
+    get canGoBack() {
+      return observe((navigation) => navigation.canGoBack, false);
+    },
+    get canGoForward() {
+      return observe((navigation) => navigation.canGoForward, false);
+    },
+    navigate(url, options) {
+      const navigation = webGlobal.navigation;
 
-        if (!navigation) {
-          return undefined;
+      if (!navigation) {
+        return undefined;
+      }
+
+      const currentURL =
+        navigation.currentEntry?.url || webGlobal.location?.href;
+      let targetURL: string | URL | undefined = currentURL;
+      const { query: optionsQuery, ...nativeOptions } = options ?? {};
+      let query = optionsQuery;
+
+      if (typeof url === 'string') {
+        targetURL = url || currentURL;
+      } else if (url instanceof URL) {
+        targetURL = url;
+      } else if (url !== null) {
+        query = url;
+      }
+
+      if (!targetURL) {
+        return undefined;
+      }
+
+      let navigationURL: string | URL = targetURL;
+      const documentBase = webGlobal.document?.baseURI;
+      const baseURL =
+        documentBase && URL.canParse(targetURL, documentBase)
+          ? documentBase
+          : currentURL;
+
+      if (query !== undefined) {
+        const target = new URL(targetURL, baseURL);
+        target.search = toSearchParams(query).toString();
+        navigationURL = target.href;
+      }
+
+      const start = () => {
+        if (options || query !== undefined) {
+          return navigation.navigate(navigationURL, nativeOptions);
         }
 
-        const currentURL =
-          navigation.currentEntry?.url || webGlobal.location?.href;
-        let targetURL: string | URL | undefined = currentURL;
-        const { query: optionsQuery, ...nativeOptions } = options ?? {};
-        let query = optionsQuery;
+        return navigation.navigate(navigationURL);
+      };
 
-        if (typeof url === 'string') {
-          targetURL = url || currentURL;
-        } else if (url instanceof URL) {
-          targetURL = url;
-        } else if (url !== null) {
-          query = url;
-        }
+      if (mpa) {
+        return start();
+      }
 
-        if (!targetURL) {
-          return undefined;
-        }
+      // Invalid URLs are reported by the native navigate() result.
+      if (!URL.canParse(navigationURL, baseURL)) {
+        return start();
+      }
 
-        let navigationURL: string | URL = targetURL;
-        const documentBase = webGlobal.document?.baseURI;
-        const baseURL =
-          documentBase && URL.canParse(targetURL, documentBase)
-            ? documentBase
-            : currentURL;
-
-        if (query !== undefined) {
-          const target = new URL(targetURL, baseURL);
-          target.search = toSearchParams(query).toString();
-          navigationURL = target.href;
-        }
-
-        const start = () => {
-          if (options || query !== undefined) {
-            return navigation.navigate(navigationURL, nativeOptions);
-          }
-
-          return navigation.navigate(navigationURL);
-        };
-
-        if (mpa) {
-          return start();
-        }
-
-        // Invalid URLs are reported by the native navigate() result.
-        if (!URL.canParse(navigationURL, baseURL)) {
-          return start();
-        }
-
-        if (spaNavigation !== navigation) {
-          spaNavigation?.removeEventListener('navigate', onNavigate, true);
-          navigation.addEventListener('navigate', onNavigate, true);
-          spaNavigation = navigation;
-        }
-
-        const previousURL = pendingURL;
-        pendingURL = new URL(navigationURL, baseURL).href;
-
-        try {
-          return start();
-        } finally {
-          pendingURL = previousURL;
-        }
-      },
-      back(options) {
-        return webGlobal.navigation?.back(options);
-      },
-      forward(options) {
-        return webGlobal.navigation?.forward(options);
-      },
-      reload(options) {
-        return webGlobal.navigation?.reload(options);
-      },
-      traverseTo(key, options) {
-        return webGlobal.navigation?.traverseTo(key, options);
-      },
-      destroy() {
+      if (spaNavigation !== navigation) {
         spaNavigation?.removeEventListener('navigate', onNavigate, true);
-        spaNavigation = undefined;
-        pendingURL = undefined;
-        stopObservingNavigation?.();
-        stopObservingNavigation = undefined;
-      },
+        navigation.addEventListener('navigate', onNavigate, true);
+        spaNavigation = navigation;
+      }
+
+      const previousURL = pendingURL;
+      pendingURL = new URL(navigationURL, baseURL).href;
+
+      try {
+        return start();
+      } finally {
+        pendingURL = previousURL;
+      }
     },
-    {
-      currentEntry: computed,
-      url: computed,
-      path: computed,
-      state: computed,
-      query: computed,
-      queryData: computed,
-      hash: computed,
-      entries: computed,
-      canGoBack: computed,
-      canGoForward: computed,
+    back(options) {
+      return webGlobal.navigation?.back(options);
     },
-  );
+    forward(options) {
+      return webGlobal.navigation?.forward(options);
+    },
+    reload(options) {
+      return webGlobal.navigation?.reload(options);
+    },
+    traverseTo(key, options) {
+      return webGlobal.navigation?.traverseTo(key, options);
+    },
+    destroy() {
+      spaNavigation?.removeEventListener('navigate', onNavigate, true);
+      spaNavigation = undefined;
+      pendingURL = undefined;
+      stopObservingNavigation?.();
+      stopObservingNavigation = undefined;
+    },
+  };
+
+  applyObservable(navigationInfo, [
+    [
+      annotation.computed(),
+      'currentEntry',
+      'url',
+      'path',
+      'state',
+      'query',
+      'queryData',
+      'hash',
+      'entries',
+      'canGoBack',
+      'canGoForward',
+    ],
+  ]);
 
   return navigationInfo;
 };

@@ -45,10 +45,10 @@
     "url": "https://github.com/js2me/mobx-web-api"
   },
   "peerDependencies": {
-    "mobx": "^6.13.6"
+    "mobx": "^6.13.6 || ^7.0.0"
   },
   "dependencies": {
-    "yummies": "^7.8.1"
+    "yummies": "^7.22.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.15",
