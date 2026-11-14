@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.19.0
+
+### Minor Changes
+
+- [#33](https://github.com/js2me/mobx-web-api/pull/33) [`2ec3427`](https://github.com/js2me/mobx-web-api/commit/2ec34274d8cabc41be8bbbeebd9e084600da0d5a) Thanks [@js2me](https://github.com/js2me)! - Add MobX 7 support while preserving MobX 6 compatibility.
+
 ## 1.18.0
 
 ### Minor Changes
