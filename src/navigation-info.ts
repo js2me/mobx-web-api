@@ -124,7 +124,7 @@ export interface NavigationInfoOptions {
 
 const annotations: ObservableAnnotationsArray<NavigationInfo> = [
   [
-    annotation.computed(),
+    annotation.computed,
     'currentEntry',
     'url',
     'path',

@@ -130,7 +130,7 @@ export interface MediaQueryInfo {
 }
 
 const annotations: ObservableAnnotationsArray<MediaQueryInfo> = [
-  [annotation.computed('struct'), 'sizes'],
+  [annotation.computedStruct, 'sizes'],
 ];
 
 /**

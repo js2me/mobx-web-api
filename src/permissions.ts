@@ -14,7 +14,7 @@ type IPermissionAtom = IEnhancedAtom<{
 }>;
 
 const annotations: ObservableAnnotationsArray<IPermissionAtom['meta']> = [
-  [annotation.observable('ref'), 'error'],
+  [annotation.observableRef, 'error'],
 ];
 
 export interface PermissionInfo {

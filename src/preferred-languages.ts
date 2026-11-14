@@ -39,7 +39,7 @@ const keysMapping = [
 ][];
 
 const annotations: ObservableAnnotationsArray<PreferredLanguages> = [
-  [annotation.observable('ref'), 'acceptLanguageHeader'],
+  [annotation.observableRef, 'acceptLanguageHeader'],
 ];
 
 /**

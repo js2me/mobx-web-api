@@ -26,8 +26,8 @@ export type GeolocationProvider = {
 };
 
 const annotations: ObservableAnnotationsArray<BaseGeolocationProvider> = [
-  [annotation.observable('deep'), 'position'],
-  [annotation.computed('struct'), 'error'],
+  [annotation.observableDeep, 'position'],
+  [annotation.computedStruct, 'error'],
 ];
 
 export class BaseGeolocationProvider implements GeolocationProvider {
@@ -127,4 +127,4 @@ export const geolocation: GeolocationInfo = {
   },
 };
 
-applyObservable(geolocation, [[annotation.computed('struct'), 'position']]);
+applyObservable(geolocation, [[annotation.computedStruct, 'position']]);
