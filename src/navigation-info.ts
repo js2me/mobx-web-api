@@ -122,7 +122,7 @@ export interface NavigationInfoOptions {
   mpa?: boolean;
 }
 
-const navigationInfoAnnotations: ObservableAnnotationsArray<NavigationInfo> = [
+const annotations: ObservableAnnotationsArray<NavigationInfo> = [
   [
     annotation.computed(),
     'currentEntry',
@@ -374,7 +374,7 @@ export const createNavigationInfo = ({
     },
   };
 
-  applyObservable(navigationInfo, navigationInfoAnnotations);
+  applyObservable(navigationInfo, annotations);
 
   return navigationInfo;
 };

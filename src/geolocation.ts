@@ -25,11 +25,10 @@ export type GeolocationProvider = {
   deactivate(): void;
 };
 
-const baseGeolocationProviderAnnotations: ObservableAnnotationsArray<BaseGeolocationProvider> =
-  [
-    [annotation.observable('deep'), 'position'],
-    [annotation.computed('struct'), 'error'],
-  ];
+const annotations: ObservableAnnotationsArray<BaseGeolocationProvider> = [
+  [annotation.observable('deep'), 'position'],
+  [annotation.computed('struct'), 'error'],
+];
 
 export class BaseGeolocationProvider implements GeolocationProvider {
   private watchId: Maybe<number>;
@@ -48,7 +47,7 @@ export class BaseGeolocationProvider implements GeolocationProvider {
   };
 
   constructor(private positionOptions?: PositionOptions) {
-    applyObservable(this, baseGeolocationProviderAnnotations);
+    applyObservable(this, annotations);
 
     onBecomeObserved(this, 'position', () => {
       this.activate();
@@ -109,10 +108,6 @@ export interface GeolocationInfo {
   position: GeolocationPosition;
 }
 
-const geolocationAnnotations: ObservableAnnotationsArray<GeolocationInfo> = [
-  [annotation.computed('struct'), 'position'],
-];
-
 /**
  * Reactive geolocation API for MobX consumers.
  *
@@ -132,4 +127,4 @@ export const geolocation: GeolocationInfo = {
   },
 };
 
-applyObservable(geolocation, geolocationAnnotations);
+applyObservable(geolocation, [[annotation.computed('struct'), 'position']]);

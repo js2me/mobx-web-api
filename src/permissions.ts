@@ -13,9 +13,9 @@ type IPermissionAtom = IEnhancedAtom<{
   error?: unknown;
 }>;
 
-const permissionMetaAnnotations: ObservableAnnotationsArray<
-  IPermissionAtom['meta']
-> = [[annotation.observable('ref'), 'error']];
+const annotations: ObservableAnnotationsArray<IPermissionAtom['meta']> = [
+  [annotation.observable('ref'), 'error'],
+];
 
 export interface PermissionInfo {
   _atom?: IPermissionAtom;
@@ -60,7 +60,7 @@ const getOrCreatePermissionAtom = (
     const meta: IPermissionAtom['meta'] = {
       retry: () => requestPermission(name, info._atom!),
     };
-    applyObservable(meta, permissionMetaAnnotations);
+    applyObservable(meta, annotations);
 
     info._atom = createEnhancedAtom<IPermissionAtom['meta']>(
       process.env.NODE_ENV === 'production' ? '' : `${name}_permission`,

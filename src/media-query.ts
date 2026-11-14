@@ -129,7 +129,7 @@ export interface MediaQueryInfo {
   _atom?: IEnhancedAtom;
 }
 
-const mediaQueryAnnotations: ObservableAnnotationsArray<MediaQueryInfo> = [
+const annotations: ObservableAnnotationsArray<MediaQueryInfo> = [
   [annotation.computed('struct'), 'sizes'],
 ];
 
@@ -182,4 +182,4 @@ export const mediaQuery: MediaQueryInfo = {
   },
 };
 
-applyObservable(mediaQuery, mediaQueryAnnotations);
+applyObservable(mediaQuery, annotations);

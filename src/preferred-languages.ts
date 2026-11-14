@@ -38,8 +38,9 @@ const keysMapping = [
   keyof globalThis.NavigatorLanguage,
 ][];
 
-const preferredLanguagesAnnotations: ObservableAnnotationsArray<PreferredLanguages> =
-  [[annotation.observable('ref'), 'acceptLanguageHeader']];
+const annotations: ObservableAnnotationsArray<PreferredLanguages> = [
+  [annotation.observable('ref'), 'acceptLanguageHeader'],
+];
 
 /**
  * Reactive preferred languages information for MobX consumers.
@@ -108,4 +109,4 @@ export const preferredLanguages = keysMapping.reduce(
   } as PreferredLanguages,
 );
 
-applyObservable(preferredLanguages, preferredLanguagesAnnotations);
+applyObservable(preferredLanguages, annotations);
