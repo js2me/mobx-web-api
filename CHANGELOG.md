@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.19.1
+
+### Patch Changes
+
+- [#36](https://github.com/js2me/mobx-web-api/pull/36) [`3f8f8b4`](https://github.com/js2me/mobx-web-api/commit/3f8f8b46217f8d7b078db8cb6276baf72fea6c4a) Thanks [@js2me](https://github.com/js2me)! - Bump yummies to 7.23.1 for properly typed MobX annotation helpers.
+
 ## 1.19.0
 
 ### Minor Changes
