@@ -1,5 +1,11 @@
 # mobx-web-api
 
+## 1.19.2
+
+### Patch Changes
+
+- [#38](https://github.com/js2me/mobx-web-api/pull/38) [`b5f5fad`](https://github.com/js2me/mobx-web-api/commit/b5f5fadebddfa84d4d85a75b23b6f62bdc38feb6) Thanks [@js2me](https://github.com/js2me)! - Bump yummies to 7.23.2 to fix MobX 6 bundler compatibility.
+
 ## 1.19.1
 
 ### Patch Changes
